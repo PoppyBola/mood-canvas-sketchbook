@@ -1,11 +1,11 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import MoodInput from '../components/mood/MoodInput';
 import ArtDisplay from '../components/art/ArtDisplay';
 import HistoryView from '../components/history/HistoryView';
 import { findArtForMood, MoodData } from '../data/moodData';
 import { addHistoryEntry, getHistory } from '../utils/historyUtils';
+import { getSessionStreak, incrementSessionStreak } from '../utils/sessionUtils';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -14,6 +14,11 @@ const Index = () => {
   const [artData, setArtData] = useState<MoodData | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [gradientClasses, setGradientClasses] = useState<string[]>(["from-gray-100", "to-slate-200"]);
+  const [sessionStreak, setSessionStreak] = useState(0);
+
+  useEffect(() => {
+    setSessionStreak(getSessionStreak());
+  }, []);
 
   const handleMoodSubmit = (mood: string) => {
     const matchedArtData = findArtForMood(mood);
@@ -29,6 +34,13 @@ const Index = () => {
       quote: matchedArtData.quote,
       quoteAuthor: matchedArtData.quoteAuthor
     });
+
+    // Update streak
+    const newStreak = incrementSessionStreak();
+    setSessionStreak(newStreak);
+    if (newStreak > 1) {
+      toast(`${newStreak} canvases created! 🎨`);
+    }
   };
 
   const handleShare = async () => {

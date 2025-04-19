@@ -2,6 +2,7 @@
 import React, { ReactNode } from 'react';
 import Header from './Header';
 import Footer from './Footer';
+import { getGreeting } from '../utils/timeUtils';
 
 interface LayoutProps {
   children: ReactNode;
@@ -9,12 +10,17 @@ interface LayoutProps {
   gradientClasses?: string[];
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, onHeaderClick, gradientClasses = ["from-gray-100", "to-slate-200"] }) => {
+const Layout: React.FC<LayoutProps> = ({ 
+  children, 
+  onHeaderClick, 
+  gradientClasses = ["from-gray-100", "to-slate-200"] 
+}) => {
   const gradientClassNames = [`bg-gradient-to-br`, ...gradientClasses].join(' ');
+  const greeting = getGreeting();
   
   return (
     <div className={`flex flex-col min-h-full transition-colors duration-1000 ease-in-out ${gradientClassNames}`}>
-      <Header onClick={onHeaderClick} />
+      <Header onClick={onHeaderClick} greeting={greeting} />
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 w-full max-w-md mx-auto">
         {children}
       </main>
