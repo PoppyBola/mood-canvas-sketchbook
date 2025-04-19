@@ -13,12 +13,14 @@ const Index = () => {
   const [showArt, setShowArt] = useState<boolean>(false);
   const [artData, setArtData] = useState<MoodData | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [gradientClasses, setGradientClasses] = useState<string[]>(["from-gray-100", "to-slate-200"]);
 
   const handleMoodSubmit = (mood: string) => {
     const matchedArtData = findArtForMood(mood);
     setCurrentMood(mood);
     setArtData(matchedArtData);
     setShowArt(true);
+    setGradientClasses(matchedArtData.gradientClasses);
 
     // Add to history
     addHistoryEntry({
@@ -49,7 +51,7 @@ const Index = () => {
   };
 
   return (
-    <Layout onHeaderClick={handleNewCanvas}>
+    <Layout onHeaderClick={handleNewCanvas} gradientClasses={gradientClasses}>
       <div className="w-full flex flex-col items-center justify-center">
         {!showArt ? (
           <MoodInput onSubmit={handleMoodSubmit} />

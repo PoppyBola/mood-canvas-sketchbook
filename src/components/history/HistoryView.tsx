@@ -12,7 +12,7 @@ interface HistoryViewProps {
 
 const HistoryView: React.FC<HistoryViewProps> = ({ onClose, entries }) => {
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 animate-fade-in">
+    <div className="fixed inset-0 bg-black/50 z-50 animate-fade-in backdrop-blur-sm">
       <div className="fixed inset-x-4 top-[10%] bottom-[10%] bg-white rounded-lg shadow-xl p-4 md:max-w-md md:mx-auto animate-scale-in">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-normal">Canvas History</h2>
@@ -25,28 +25,34 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onClose, entries }) => {
         </div>
         
         <ScrollArea className="h-[calc(100%-4rem)]">
-          <div className="space-y-4">
-            {entries.map((entry) => (
-              <div
-                key={entry.id}
-                className="p-4 border border-canvas-border rounded-lg"
-              >
-                <div className="flex gap-4">
-                  <img
-                    src={entry.imagePlaceholder}
-                    alt={entry.mood}
-                    className="w-20 h-20 object-cover rounded"
-                  />
-                  <div>
-                    <p className="font-medium">{entry.mood}</p>
-                    <p className="text-sm text-canvas-muted">
-                      {formatDistanceToNow(entry.timestamp, { addSuffix: true })}
-                    </p>
-                    <p className="text-sm mt-2 italic">{entry.quote}</p>
+          <div className="space-y-4 pr-2">
+            {entries.length === 0 ? (
+              <p className="text-canvas-muted text-center py-8">No canvases yet. Create your first mood canvas!</p>
+            ) : (
+              entries.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="p-4 border border-canvas-border rounded-lg hover:border-canvas-accent transition-colors shadow-sm"
+                >
+                  <div className="flex gap-4">
+                    <div className="w-20 h-20 flex-shrink-0 overflow-hidden rounded-md border border-canvas-border">
+                      <img
+                        src={entry.imagePlaceholder}
+                        alt={entry.mood}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <p className="font-medium text-lg">{entry.mood}</p>
+                      <p className="text-xs text-canvas-muted mb-2">
+                        {formatDistanceToNow(entry.timestamp, { addSuffix: true })}
+                      </p>
+                      <p className="text-sm italic line-clamp-2">{entry.quote}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </ScrollArea>
       </div>
