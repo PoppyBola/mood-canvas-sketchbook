@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -25,7 +26,7 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				canvas: {
-					background: '#FDFAF5', // Warmer white
+					background: '#FFF8F0', // Warmer white
 					foreground: '#463F3A', // Warm gray
 					muted: '#8A817C', // Muted warm gray
 					accent: '#E5989B', // Soft terracotta
@@ -88,9 +89,6 @@ export default {
 					'100%': { opacity: '1', transform: 'scale(1)' }
 				}
 			},
-			fontFamily: {
-				sans: ['Inter', 'sans-serif']
-			}
 		}
 	},
 	plugins: [require("tailwindcss-animate")],

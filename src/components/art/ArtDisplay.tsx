@@ -24,16 +24,22 @@ const ArtDisplay: React.FC<ArtDisplayProps> = ({
         <h2 className="text-lg font-display text-canvas-foreground">Canvas for {mood}</h2>
       </div>
 
-      <div className="rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 border border-canvas-border bg-white relative">
-        <img 
-          src={artData.imagePlaceholder} 
-          alt={`Art inspired by the mood: ${mood}`}
-          className="w-full h-auto"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent flex flex-col justify-end p-6 pb-8 transition-opacity duration-300 hover:from-black/80">
-          <div className="text-center space-y-3 transform transition-transform duration-300 hover:scale-[1.02]">
-            <p className="font-display text-xl md:text-2xl text-white leading-relaxed">{artData.quote}</p>
-            <p className="text-sm md:text-base text-white/90 font-sans">— {artData.quoteAuthor}</p>
+      <div className="rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-500 border border-canvas-border bg-white relative">
+        <div className="relative">
+          {/* Image */}
+          <img 
+            src={artData.imagePlaceholder} 
+            alt={`Art inspired by the mood: ${mood}`}
+            className="w-full h-auto object-cover"
+            style={{ minHeight: "300px" }}
+          />
+          
+          {/* Quote overlay - positioned absolutely over the image */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent flex flex-col justify-end p-6 pb-8">
+            <div className="text-center space-y-3 transform transition-transform duration-300 hover:scale-[1.02]">
+              <p className="font-display text-xl md:text-2xl text-white leading-relaxed">{artData.quote}</p>
+              <p className="text-sm md:text-base text-white/90 font-sans">— {artData.quoteAuthor}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -67,4 +73,3 @@ const ArtDisplay: React.FC<ArtDisplayProps> = ({
 };
 
 export default ArtDisplay;
-

@@ -13,7 +13,7 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ 
   children, 
   onHeaderClick, 
-  gradientClasses = ["from-canvas-background", "to-white"] 
+  gradientClasses = ["from-amber-50", "via-orange-50", "to-yellow-50"] 
 }) => {
   const gradientClassNames = [`bg-gradient-to-br`, ...gradientClasses].join(' ');
   const greeting = getGreeting();
@@ -30,4 +30,3 @@ const Layout: React.FC<LayoutProps> = ({
 };
 
 export default Layout;
-

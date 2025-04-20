@@ -14,35 +14,44 @@ const Index = () => {
   const [currentMood, setCurrentMood] = useState<string>('');
   const [showArt, setShowArt] = useState<boolean>(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [gradientClasses, setGradientClasses] = useState<string[]>(["from-gray-100", "to-slate-200"]);
+  const [gradientClasses, setGradientClasses] = useState<string[]>(["from-amber-50", "via-orange-50", "to-yellow-50"]);
   const [sessionStreak, setSessionStreak] = useState(getSessionStreak());
 
   // Use our custom hook to fetch mood entries
-  const { moodEntry, imageUrl, isLoading } = useMoodEntry(currentMood);
+  const { moodEntry, imageUrl, isLoading, error } = useMoodEntry(currentMood);
 
   const handleMoodSubmit = (mood: string) => {
     setCurrentMood(mood);
     setShowArt(true);
-    
-    if (moodEntry) {
-      setGradientClasses(moodEntry.gradient_classes);
+  };
+
+  // Effect when moodEntry changes
+  React.useEffect(() => {
+    if (moodEntry && showArt) {
+      console.log("Mood entry loaded:", moodEntry);
+      
+      if (moodEntry.gradient_classes && moodEntry.gradient_classes.length > 0) {
+        setGradientClasses(moodEntry.gradient_classes);
+      }
       
       // Add to history
-      addHistoryEntry({
-        mood,
-        imagePlaceholder: imageUrl || '',
-        quote: moodEntry.quote,
-        quoteAuthor: moodEntry.quote_author
-      });
+      if (imageUrl) {
+        addHistoryEntry({
+          mood: currentMood,
+          imagePlaceholder: imageUrl,
+          quote: moodEntry.quote,
+          quoteAuthor: moodEntry.quote_author
+        });
 
-      // Update streak
-      const newStreak = incrementSessionStreak();
-      setSessionStreak(newStreak);
-      if (newStreak > 1) {
-        toast(`${newStreak} canvases created! 🎨`);
+        // Update streak
+        const newStreak = incrementSessionStreak();
+        setSessionStreak(newStreak);
+        if (newStreak > 1) {
+          toast(`${newStreak} canvases created! 🎨`);
+        }
       }
     }
-  };
+  }, [moodEntry, imageUrl, currentMood, showArt]);
 
   const handleShare = async () => {
     if (!moodEntry) return;
@@ -73,17 +82,31 @@ const Index = () => {
     );
   }
 
+  // Show error state
+  if (showArt && error) {
+    console.error("Error loading mood entry:", error);
+    return (
+      <Layout gradientClasses={gradientClasses}>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-red-500">
+            Sorry, we couldn't load your canvas. Please try again.
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout onHeaderClick={handleNewCanvas} gradientClasses={gradientClasses}>
       <div className="w-full flex flex-col items-center justify-center">
         {!showArt ? (
           <MoodInput onSubmit={handleMoodSubmit} />
-        ) : moodEntry && (
+        ) : moodEntry && imageUrl ? (
           <ArtDisplay 
             mood={currentMood} 
             artData={{
               moodKeyword: currentMood,
-              imagePlaceholder: imageUrl || '',
+              imagePlaceholder: imageUrl,
               quote: moodEntry.quote,
               quoteAuthor: moodEntry.quote_author,
               gradientClasses: moodEntry.gradient_classes
@@ -92,6 +115,8 @@ const Index = () => {
             onHistory={() => setShowHistory(true)}
             onNewCanvas={handleNewCanvas}
           />
+        ) : (
+          <div className="text-canvas-muted">No matching mood found. Try another word.</div>
         )}
       </div>
       

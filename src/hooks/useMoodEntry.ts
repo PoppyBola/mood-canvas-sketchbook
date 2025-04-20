@@ -1,8 +1,7 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Fuse from 'fuse.js';
-import { supabase } from '../lib/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MoodEntry {
   id: string;
@@ -16,9 +15,13 @@ interface MoodEntry {
 export const useMoodEntry = (searchTerm: string) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
-  const { data: moodEntry, isLoading } = useQuery({
+  const { data: moodEntry, isLoading, error } = useQuery({
     queryKey: ['moodEntry', searchTerm],
     queryFn: async (): Promise<MoodEntry | null> => {
+      if (!searchTerm) return null;
+
+      console.log('Searching for mood:', searchTerm);
+      
       // Try exact match first
       let { data: exactMatches, error: exactError } = await supabase
         .from('mood_entries')
@@ -32,19 +35,26 @@ export const useMoodEntry = (searchTerm: string) => {
       }
 
       if (exactMatches && exactMatches.length > 0) {
+        console.log('Found exact matches:', exactMatches.length);
         const randomMatch = exactMatches[Math.floor(Math.random() * exactMatches.length)];
         return randomMatch;
       }
 
       // If no exact match, try fuzzy matching
-      const { data: allTags } = await supabase
+      const { data: allEntries } = await supabase
         .from('mood_entries')
-        .select('mood_tags');
+        .select('id, mood_tags');
 
-      if (!allTags) return null;
+      if (!allEntries || allEntries.length === 0) {
+        console.log('No entries found in database');
+        return null;
+      }
 
       // Extract unique tags
-      const uniqueTags = Array.from(new Set(allTags.flatMap(entry => entry.mood_tags)));
+      const allTags = allEntries.flatMap(entry => entry.mood_tags);
+      const uniqueTags = Array.from(new Set(allTags));
+      
+      console.log('Available tags for fuzzy matching:', uniqueTags);
       
       const fuse = new Fuse(uniqueTags, {
         threshold: 0.4,
@@ -55,6 +65,7 @@ export const useMoodEntry = (searchTerm: string) => {
       
       if (fuzzyResults.length > 0) {
         const matchedTag = fuzzyResults[0].item;
+        console.log(`Fuzzy matched "${searchTerm}" to "${matchedTag}"`);
         
         let { data: fuzzyMatches, error: fuzzyError } = await supabase
           .from('mood_entries')
@@ -68,11 +79,13 @@ export const useMoodEntry = (searchTerm: string) => {
         }
 
         if (fuzzyMatches && fuzzyMatches.length > 0) {
-          return fuzzyMatches[Math.floor(Math.random() * fuzzyMatches.length)];
+          const randomFuzzyMatch = fuzzyMatches[Math.floor(Math.random() * fuzzyMatches.length)];
+          return randomFuzzyMatch;
         }
       }
 
       // Fallback: Get a random entry
+      console.log('Falling back to random entry');
       const { data: randomEntries } = await supabase
         .from('mood_entries')
         .select('*')
@@ -82,25 +95,40 @@ export const useMoodEntry = (searchTerm: string) => {
         return randomEntries[Math.floor(Math.random() * randomEntries.length)];
       }
 
+      console.log('No entries found at all');
       return null;
     },
+    enabled: searchTerm !== '',
   });
 
-  // Get image URL when moodEntry changes
-  const getImageUrl = async () => {
-    if (moodEntry?.image_path) {
-      const { data } = supabase.storage
-        .from('mood_images')
-        .getPublicUrl(moodEntry.image_path);
-      setImageUrl(data.publicUrl);
+  useEffect(() => {
+    const getImageUrl = async () => {
+      if (moodEntry?.image_path) {
+        try {
+          // Check if it's an external URL
+          if (moodEntry.image_path.startsWith('http')) {
+            setImageUrl(moodEntry.image_path);
+          } else {
+            // Otherwise, it's a Supabase storage path
+            const { data } = supabase.storage
+              .from('mood_images')
+              .getPublicUrl(moodEntry.image_path);
+            
+            if (data?.publicUrl) {
+              console.log('Image URL:', data.publicUrl);
+              setImageUrl(data.publicUrl);
+            }
+          }
+        } catch (err) {
+          console.error('Error getting image URL:', err);
+        }
+      }
+    };
+
+    if (moodEntry) {
+      getImageUrl();
     }
-  };
+  }, [moodEntry]);
 
-  // Effect to update image URL
-  if (moodEntry && !imageUrl) {
-    getImageUrl();
-  }
-
-  return { moodEntry, imageUrl, isLoading };
+  return { moodEntry, imageUrl, isLoading, error };
 };
-
