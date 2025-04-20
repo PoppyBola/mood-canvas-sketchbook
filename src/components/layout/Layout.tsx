@@ -1,3 +1,4 @@
+
 import React, { ReactNode } from 'react';
 import Header from './Header';
 import Footer from './Footer';
@@ -12,7 +13,7 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ 
   children, 
   onHeaderClick, 
-  gradientClasses = ["from-gray-100", "to-slate-200"] 
+  gradientClasses = ["from-canvas-background", "to-white"] 
 }) => {
   const gradientClassNames = [`bg-gradient-to-br`, ...gradientClasses].join(' ');
   const greeting = getGreeting();
@@ -29,3 +30,4 @@ const Layout: React.FC<LayoutProps> = ({
 };
 
 export default Layout;
+
