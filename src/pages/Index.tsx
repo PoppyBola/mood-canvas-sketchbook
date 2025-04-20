@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import MoodInput from '../components/mood/MoodInput';
@@ -6,6 +7,7 @@ import HistoryView from '../components/history/HistoryView';
 import { findArtForMood, MoodData } from '../data/moodData';
 import { addHistoryEntry, getHistory } from '../utils/historyUtils';
 import { getSessionStreak, incrementSessionStreak } from '../utils/sessionUtils';
+import { getEnhancedMoodMatch } from '../utils/moodUtils';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -21,7 +23,8 @@ const Index = () => {
   }, []);
 
   const handleMoodSubmit = (mood: string) => {
-    const matchedArtData = findArtForMood(mood);
+    // Use enhanced mood matching instead of direct findArtForMood
+    const matchedArtData = getEnhancedMoodMatch(mood);
     setCurrentMood(mood);
     setArtData(matchedArtData);
     setShowArt(true);

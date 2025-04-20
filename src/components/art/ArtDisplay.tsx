@@ -30,13 +30,12 @@ const ArtDisplay: React.FC<ArtDisplayProps> = ({
           alt={`Art inspired by the mood: ${mood}`}
           className="w-full h-auto"
         />
-        
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/50 to-transparent p-4 pt-16">
-          <div className="space-y-2">
-            <p className="text-base text-white italic leading-relaxed">"{artData.quote}"</p>
-            <p className="text-sm text-white/80">— {artData.quoteAuthor}</p>
-          </div>
-        </div>
+      </div>
+      
+      {/* Quote block relocated outside the image container */}
+      <div className="text-center space-y-3 pt-4 px-4 opacity-0 animate-fade-in" style={{ animationDelay: "150ms", animationFillMode: "forwards" }}>
+        <p className="text-xl md:text-2xl text-canvas-foreground italic leading-relaxed">"{artData.quote}"</p>
+        <p className="text-sm md:text-base text-canvas-muted">— {artData.quoteAuthor}</p>
       </div>
       
       <div className="flex justify-center space-x-6 pt-4 opacity-0 animate-fade-in" style={{ animationDelay: "200ms", animationFillMode: "forwards" }}>
