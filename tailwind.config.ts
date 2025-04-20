@@ -30,7 +30,9 @@ export default {
 					foreground: '#463F3A', // Warm gray
 					muted: '#8A817C', // Muted warm gray
 					accent: '#E5989B', // Soft terracotta
-					border: '#F4F1E9' // Warm light gray
+					border: '#F4F1E9', // Warm light gray
+					highlight: '#F4EBD0', // Soft cream
+					secondary: '#9D8189' // Dusty rose
 				},
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
@@ -78,6 +80,7 @@ export default {
 			animation: {
 				'fade-up': 'fadeUp 0.5s ease-out',
 				'scale-in': 'scaleIn 0.2s ease-out',
+				'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
 			},
 			keyframes: {
 				fadeUp: {
@@ -87,7 +90,18 @@ export default {
 				scaleIn: {
 					'0%': { opacity: '0', transform: 'scale(0.95)' },
 					'100%': { opacity: '1', transform: 'scale(1)' }
+				},
+				float: {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-5px)' }
 				}
+			},
+			borderRadius: {
+				'2.5xl': '1.25rem',
+			},
+			boxShadow: {
+				'warm': '0 4px 14px 0 rgba(70, 63, 58, 0.1)',
+				'warm-lg': '0 10px 30px -5px rgba(70, 63, 58, 0.15)',
 			},
 		}
 	},

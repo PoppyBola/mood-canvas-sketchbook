@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import MoodInput from '../components/mood/MoodInput';
 import ArtDisplay from '../components/art/ArtDisplay';
@@ -8,7 +8,6 @@ import { useMoodEntry } from '../hooks/useMoodEntry';
 import { addHistoryEntry, getHistory } from '../utils/historyUtils';
 import { getSessionStreak, incrementSessionStreak } from '../utils/sessionUtils';
 import { toast } from 'sonner';
-import { MoodData } from '../data/moodData';
 
 const Index = () => {
   const [currentMood, setCurrentMood] = useState<string>('');
@@ -16,6 +15,7 @@ const Index = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [gradientClasses, setGradientClasses] = useState<string[]>(["from-amber-50", "via-orange-50", "to-yellow-50"]);
   const [sessionStreak, setSessionStreak] = useState(getSessionStreak());
+  const [isFirstVisit, setIsFirstVisit] = useState(true);
 
   // Use our custom hook to fetch mood entries
   const { moodEntry, imageUrl, isLoading, error } = useMoodEntry(currentMood);
@@ -23,10 +23,11 @@ const Index = () => {
   const handleMoodSubmit = (mood: string) => {
     setCurrentMood(mood);
     setShowArt(true);
+    setIsFirstVisit(false);
   };
 
   // Effect when moodEntry changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (moodEntry && showArt) {
       console.log("Mood entry loaded:", moodEntry);
       
@@ -52,17 +53,40 @@ const Index = () => {
       }
     }
   }, [moodEntry, imageUrl, currentMood, showArt]);
+  
+  // Welcome message for first-time visitors
+  useEffect(() => {
+    if (isFirstVisit) {
+      const timer = setTimeout(() => {
+        toast("Welcome to Daily Mood Canvas! Express your mood and create a beautiful canvas.");
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isFirstVisit]);
 
   const handleShare = async () => {
     if (!moodEntry) return;
     
-    const shareText = `My mood canvas for '${currentMood}': "${moodEntry.quote}" - ${moodEntry.quote_author} #DailyMoodCanvas`;
-    
     try {
+      // Try to use Web Share API first
+      if (navigator.share) {
+        await navigator.share({
+          title: 'My Daily Mood Canvas',
+          text: `My mood canvas for '${currentMood}': "${moodEntry.quote}" - ${moodEntry.quote_author} #DailyMoodCanvas`,
+          // We can't share the image directly via Web Share API in most cases
+        });
+        toast("Shared successfully!");
+        return;
+      }
+      
+      // Fallback to clipboard
+      const shareText = `My mood canvas for '${currentMood}': "${moodEntry.quote}" - ${moodEntry.quote_author} #DailyMoodCanvas`;
       await navigator.clipboard.writeText(shareText);
       toast("Copied to clipboard!");
     } catch (err) {
-      toast("Couldn't copy to clipboard");
+      console.error("Share failed:", err);
+      toast("Couldn't share canvas");
     }
   };
 
@@ -75,8 +99,9 @@ const Index = () => {
   if (showArt && isLoading) {
     return (
       <Layout gradientClasses={gradientClasses}>
-        <div className="flex items-center justify-center h-full">
-          <div className="animate-pulse text-canvas-muted">Loading your canvas...</div>
+        <div className="flex flex-col items-center justify-center h-full gap-3">
+          <div className="w-8 h-8 rounded-full border-4 border-canvas-accent/40 border-t-canvas-accent animate-spin"></div>
+          <div className="animate-pulse text-canvas-muted">Creating your canvas...</div>
         </div>
       </Layout>
     );
@@ -88,8 +113,8 @@ const Index = () => {
     return (
       <Layout gradientClasses={gradientClasses}>
         <div className="flex items-center justify-center h-full">
-          <div className="text-red-500">
-            Sorry, we couldn't load your canvas. Please try again.
+          <div className="text-red-500 bg-red-50 p-6 rounded-lg shadow-md border border-red-100">
+            Sorry, we couldn't create your canvas. Please try again.
           </div>
         </div>
       </Layout>
@@ -116,7 +141,15 @@ const Index = () => {
             onNewCanvas={handleNewCanvas}
           />
         ) : (
-          <div className="text-canvas-muted">No matching mood found. Try another word.</div>
+          <div className="text-canvas-muted p-8 text-center bg-white/50 rounded-xl shadow-md">
+            <p className="mb-3">No matching mood found.</p>
+            <button 
+              onClick={handleNewCanvas} 
+              className="text-canvas-accent hover:underline"
+            >
+              Try another word
+            </button>
+          </div>
         )}
       </div>
       

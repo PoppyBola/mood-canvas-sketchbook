@@ -19,7 +19,7 @@ const Layout: React.FC<LayoutProps> = ({
   const greeting = getGreeting();
   
   return (
-    <div className={`flex flex-col min-h-full transition-colors duration-1000 ease-in-out ${gradientClassNames}`}>
+    <div className={`flex flex-col min-h-full transition-colors duration-1500 ease-in-out ${gradientClassNames}`}>
       <Header onClick={onHeaderClick} greeting={greeting} />
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 w-full max-w-md mx-auto">
         {children}
