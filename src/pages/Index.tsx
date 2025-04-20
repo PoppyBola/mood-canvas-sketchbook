@@ -8,6 +8,7 @@ import { useMoodEntry } from '../hooks/useMoodEntry';
 import { addHistoryEntry, getHistory } from '../utils/historyUtils';
 import { getSessionStreak, incrementSessionStreak } from '../utils/sessionUtils';
 import { toast } from 'sonner';
+import { MoodData } from '../data/moodData';
 
 const Index = () => {
   const [currentMood, setCurrentMood] = useState<string>('');
@@ -81,9 +82,11 @@ const Index = () => {
           <ArtDisplay 
             mood={currentMood} 
             artData={{
+              moodKeyword: currentMood,
               imagePlaceholder: imageUrl || '',
               quote: moodEntry.quote,
-              quoteAuthor: moodEntry.quote_author
+              quoteAuthor: moodEntry.quote_author,
+              gradientClasses: moodEntry.gradient_classes
             }}
             onShare={handleShare}
             onHistory={() => setShowHistory(true)}
@@ -103,4 +106,3 @@ const Index = () => {
 };
 
 export default Index;
-
