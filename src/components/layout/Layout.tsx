@@ -1,8 +1,7 @@
-
 import React, { ReactNode } from 'react';
 import Header from './Header';
 import Footer from './Footer';
-import { getGreeting } from '../utils/timeUtils';
+import { getGreeting } from '../../utils/timeUtils';
 
 interface LayoutProps {
   children: ReactNode;
