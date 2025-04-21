@@ -1,6 +1,6 @@
 
 import { Link } from 'react-router-dom';
-import { PaintBrush, UserCircle, LogIn } from 'lucide-react';
+import { Paintbrush, UserCircle, LogIn } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
@@ -11,7 +11,7 @@ const Header = () => {
     <header className="p-4 flex items-center justify-between">
       <Link to="/" className="flex items-center gap-2 group">
         <div className="w-8 h-8 rounded-full bg-white/50 flex items-center justify-center shadow-warm transition-transform group-hover:scale-110">
-          <PaintBrush className="w-4 h-4 text-canvas-accent" />
+          <Paintbrush className="w-4 h-4 text-canvas-accent" />
         </div>
         <span className="font-display text-lg tracking-wide text-canvas-foreground transition-colors group-hover:text-canvas-accent">Daily Mood Canvas</span>
       </Link>

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
-import { PaintBrush, ArrowLeft } from 'lucide-react';
+import { Paintbrush, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const NotFound = () => {
@@ -12,7 +12,7 @@ const NotFound = () => {
         <div className="relative w-24 h-24">
           <div className="absolute inset-0 bg-canvas-border opacity-30 rounded-full animate-pulse-slow"></div>
           <div className="absolute inset-2 bg-white/80 rounded-full flex items-center justify-center">
-            <PaintBrush className="w-10 h-10 text-canvas-accent" />
+            <Paintbrush className="w-10 h-10 text-canvas-accent" />
           </div>
         </div>
 
