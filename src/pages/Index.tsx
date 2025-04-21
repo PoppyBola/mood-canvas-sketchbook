@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from './contexts/AuthContext';
-import Layout from './components/layout/Layout';
-import MoodSelector from './components/MoodSelector';
-import Canvas from './components/Canvas';
+import { useAuth } from '../contexts/AuthContext';
+import Layout from '../components/layout/Layout';
+import MoodSelector from '../components/MoodSelector';
+import Canvas from '../components/Canvas';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { useMoodEntry } from './hooks/useMoodEntry';
-import { addHistoryEntry } from './utils/historyUtils';
-import type { HistoryEntry } from './utils/historyUtils';
-import HistoryView from './components/history/HistoryView';
+import { useMoodEntry } from '../hooks/useMoodEntry';
+import { addHistoryEntry } from '../utils/historyUtils';
+import type { HistoryEntry } from '../utils/historyUtils';
+import HistoryView from '../components/history/HistoryView';
 
 const Index = () => {
   const [moodSearch, setMoodSearch] = useState('');

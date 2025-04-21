@@ -45,7 +45,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onClose, entries }) => {
                     <div>
                       <p className="font-medium text-lg">{entry.mood_text || entry.mood}</p>
                       <p className="text-xs text-canvas-muted mb-2">
-                        {formatDistanceToNow(new Date(entry.created_at || entry.timestamp), { addSuffix: true })}
+                        {formatDistanceToNow(new Date(entry.created_at || entry.timestamp || 0), { addSuffix: true })}
                       </p>
                       <p className="text-sm italic line-clamp-2">{entry.quote}</p>
                     </div>
