@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
@@ -22,9 +21,23 @@ const Profile = () => {
     if (!user) {
       navigate('/auth');
     } else {
-      // Load history from localStorage
-      setHistory(getHistory());
-      setIsLoading(false);
+      // Load history from Supabase
+      (async () => {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('user_mood_history')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          toast.error('Failed to load history');
+          setHistory([]);
+        } else {
+          setHistory(data || []);
+        }
+        setIsLoading(false);
+      })();
     }
   }, [user, navigate]);
 
@@ -49,9 +62,9 @@ const Profile = () => {
     }
   };
 
-  const handleDeleteHistory = () => {
+  const handleDeleteHistory = async () => {
     if (confirm('Are you sure you want to clear all your history?')) {
-      localStorage.setItem('moodHistory', JSON.stringify([]));
+      await supabase.from('user_mood_history').delete().eq('user_id', user.id);
       setHistory([]);
       toast.success('History cleared');
     }
@@ -139,7 +152,7 @@ const Profile = () => {
                           className="w-full h-full object-cover"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 flex flex-col justify-end p-3 text-white text-xs transition-opacity">
-                          <p className="font-medium">{entry.mood}</p>
+                          <p className="font-medium">{entry.mood_text}</p>
                           <button 
                             onClick={() => handleSaveCanvas(entry)}
                             className="mt-2 bg-white/20 backdrop-blur-sm text-white rounded-full py-1 px-2 flex items-center justify-center gap-1 hover:bg-white/30 transition-colors"
@@ -151,7 +164,7 @@ const Profile = () => {
                       </div>
                       <div className="p-2">
                         <p className="text-xs text-canvas-muted truncate">
-                          {new Date(entry.timestamp).toLocaleDateString()}
+                          {new Date(entry.created_at).toLocaleDateString()}
                         </p>
                       </div>
                     </div>

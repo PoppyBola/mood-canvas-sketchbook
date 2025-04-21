@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
@@ -36,6 +35,13 @@ const Admin = () => {
   const [newGradientClasses, setNewGradientClasses] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // For CSV import
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importError, setImportError] = useState('');
+  const [importResult, setImportResult] = useState<any>(null);
+  const [importLogs, setImportLogs] = useState<any[]>([]);
 
   // Fetch mood entries
   useEffect(() => {
@@ -189,9 +195,10 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="entries">
-          <TabsList className="grid grid-cols-2 w-full max-w-md mx-auto">
+          <TabsList className="grid grid-cols-3 w-full max-w-xl mx-auto">
             <TabsTrigger value="entries">Manage Entries</TabsTrigger>
             <TabsTrigger value="create">Create New</TabsTrigger>
+            <TabsTrigger value="import">Import CSV</TabsTrigger>
           </TabsList>
 
           <TabsContent value="entries" className="mt-4">
@@ -372,6 +379,118 @@ const Admin = () => {
                   </Button>
                 </div>
               </form>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="import" className="mt-4">
+            <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-canvas-border p-6 max-w-2xl mx-auto">
+              <h2 className="font-medium mb-6 flex items-center gap-2">
+                <span className="inline-block bg-canvas-accent/20 p-2 rounded-full mr-1">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect width="20" height="20" rx="6" fill="#F7D8A8"/><path d="M5.7 10a.7.7 0 0 0 0 1.4h4.2v2.68L7.58 12.28a.7.7 0 1 0-.98 1l3.43 3.35a.7.7 0 0 0 .97-.02l3.3-3.32a.7.7 0 1 0-1-.98l-2.14 2.09V11.4h4.2a.7.7 0 0 0 0-1.4H5.7Z" fill="#D27C2C"/></svg>
+                </span>
+                Bulk Import Quotes/Images via CSV
+              </h2>
+              <p className="mb-4 text-canvas-muted text-sm">
+                Import a CSV with columns: <code>quote,quote_author,image_path,mood_tags,gradient_classes,description</code>.<br/>
+                Each row creates a <b>mood entry</b>. Empty values are allowed for optional columns.<br/>
+                <span className="text-yellow-800 block mt-2">⚠️ Only admins can use this tool. All entries are instantly added if valid.</span>
+              </p>
+              {/* CSV Upload Form */}
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!csvFile) {
+                    setImportError("Select a CSV file.");
+                    return;
+                  }
+                  setImportError("");
+                  setImportLoading(true);
+                  setImportResult(null);
+
+                  // 1. Upload the file to the 'mood_images' bucket under /csv_imports
+                  const fileName = `csv_imports/${Date.now()}_mood_import.csv`;
+                  const { data, error } = await supabase.storage
+                    .from('mood_images')
+                    .upload(fileName, csvFile, { cacheControl: '60', upsert: true });
+
+                  if (error) {
+                    setImportError("File upload failed.");
+                    setImportLoading(false);
+                    return;
+                  }
+
+                  // 2. Trigger import on backend (call minimal edge function to parse/import)
+                  try {
+                    const funRes = await fetch('/functions/v1/admin_csv_import', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ storagePath: fileName, userId: user.id })
+                    });
+                    const resJson = await funRes.json();
+                    if (resJson.error) {
+                      setImportError(resJson.error);
+                    } else {
+                      setImportResult(resJson);
+                    }
+                  } catch (err) {
+                    setImportError("Backend import failed.");
+                  } finally {
+                    setImportLoading(false);
+                  }
+                }}
+                className="space-y-4"
+              >
+                <input
+                  className="block w-full border p-2 rounded text-base"
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={e => setCsvFile(e.target.files?.[0] || null)}
+                />
+                {importLoading ? (
+                  <div className="text-canvas-accent">Importing...</div>
+                ) : (
+                  <Button type="submit" disabled={importLoading}>
+                    Import CSV
+                  </Button>
+                )}
+                {importError && (
+                  <div className="text-red-500 text-sm">{importError}</div>
+                )}
+                {importResult && (
+                  <div className="text-green-700 text-sm whitespace-pre-wrap">
+                    {importResult.message || 'Import complete.'}
+                  </div>
+                )}
+              </form>
+
+              {/* Import Logs Table */}
+              <h3 className="mt-8 mb-3 font-medium text-base">Recent Imports</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead className="bg-canvas-border/30">
+                    <tr>
+                      <th className="p-2 text-left">When</th>
+                      <th className="p-2 text-left">File</th>
+                      <th className="p-2 text-left">Rows</th>
+                      <th className="p-2 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  {importLogs.length === 0 ? (
+                    <tr><td colSpan={4} className="p-4 text-center text-canvas-muted">No imports yet.</td></tr>
+                  ) : (
+                    importLogs.map(log => (
+                      <tr key={log.id}>
+                        <td className="p-2">{new Date(log.created_at).toLocaleString()}</td>
+                        <td className="p-2">{log.file_name}</td>
+                        <td className="p-2">{log.rows_processed} ({log.rows_succeeded} ok)</td>
+                        <td className="p-2">{log.status}</td>
+                      </tr>
+                    ))
+                  )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
