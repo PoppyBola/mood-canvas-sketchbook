@@ -27,12 +27,12 @@ const Profile = () => {
         setIsLoading(true);
 
         try {
-          // Fetch from user_mood_history (not a relation arg!)
+          // Use untyped query with generic type
           const { data, error } = await supabase
             .from('user_mood_history')
             .select('*')
             .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false }) as any;
 
           if (error) {
             console.error('Failed to load history:', error);
@@ -41,8 +41,8 @@ const Profile = () => {
           } else {
             // Defensive: confirm data is array
             const safeData: any[] = Array.isArray(data) ? data : [];
-            // Map result to HistoryEntry type, merging with local compatibility fields
-            const historyEntries: HistoryEntry[] = safeData.map((item) => ({
+            // Map result to HistoryEntry type
+            const historyEntries: HistoryEntry[] = safeData.map((item: any) => ({
               id: item.id,
               user_id: item.user_id ?? undefined,
               mood_text: item.mood_text,
@@ -54,9 +54,9 @@ const Profile = () => {
               gradient_classes: item.gradient_classes ?? [],
               created_at: item.created_at ?? '',
               // For backwards compat:
-              quote: undefined,
-              quote_author: undefined,
-              timestamp: undefined,
+              quote: "",
+              quote_author: "",
+              timestamp: new Date(item.created_at).getTime(),
             }));
             setHistory(historyEntries);
           }
@@ -91,7 +91,8 @@ const Profile = () => {
             image_url: entry.image_url || entry.imagePlaceholder || '',
             gradient_classes: entry.gradient_classes || [],
           }
-        ]);
+        ]) as any;
+        
       if (error) {
         console.error('Error saving canvas:', error);
         throw error;
@@ -111,7 +112,7 @@ const Profile = () => {
         const { error } = await supabase
           .from('user_mood_history')
           .delete()
-          .eq('user_id', user?.id);
+          .eq('user_id', user?.id) as any;
 
         if (error) throw error;
 
@@ -269,4 +270,3 @@ const Profile = () => {
 };
 
 export default Profile;
-

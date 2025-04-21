@@ -1,176 +1,116 @@
-
-import React, { useState, useEffect } from 'react';
-import Layout from '../components/layout/Layout';
-import MoodInput from '../components/mood/MoodInput';
-import ArtDisplay from '../components/art/ArtDisplay';
-import HistoryView from '../components/history/HistoryView';
-import { useMoodEntry } from '../hooks/useMoodEntry';
-import { addHistoryEntry, getHistory } from '../utils/historyUtils';
-import { getSessionStreak, incrementSessionStreak } from '../utils/sessionUtils';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
+import Layout from './components/layout/Layout';
+import MoodSelector from './components/MoodSelector';
+import Canvas from './components/Canvas';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useMoodEntry } from './hooks/useMoodEntry';
+import { addHistoryEntry } from './utils/historyUtils';
+import type { HistoryEntry } from './utils/historyUtils';
+import HistoryView from './components/history/HistoryView';
 
 const Index = () => {
-  const { user } = useAuth();
-  const [currentMood, setCurrentMood] = useState<string>('');
-  const [showArt, setShowArt] = useState<boolean>(false);
+  const [moodSearch, setMoodSearch] = useState('');
+  const [stage, setStage] = useState<'selector' | 'loading' | 'canvas'>('selector');
   const [showHistory, setShowHistory] = useState(false);
-  const [gradientClasses, setGradientClasses] = useState<string[]>(["from-amber-100", "via-orange-150", "to-yellow-100"]);
-  const [sessionStreak, setSessionStreak] = useState(getSessionStreak());
-  const [isFirstVisit, setIsFirstVisit] = useState(true);
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
-  // Use our custom hook to fetch mood entries
-  const { moodEntry, imageUrl, isLoading, error } = useMoodEntry(currentMood);
+  const { moodEntry, imageUrl, isLoading, error } = useMoodEntry(moodSearch);
 
   const handleMoodSubmit = (mood: string) => {
-    setCurrentMood(mood);
-    setShowArt(true);
-    setIsFirstVisit(false);
-  };
+    if (!mood || mood.trim() === '') {
+      toast.error('Please enter a mood.');
+      return;
+    }
 
-  // Effect when moodEntry changes
-  useEffect(() => {
-    if (moodEntry && showArt) {
-      // Apply gradient for warmth and smooth transition
-      if (moodEntry.gradient_classes && moodEntry.gradient_classes.length > 0) {
-        setGradientClasses(moodEntry.gradient_classes);
-      }
-
-      // Add to history
-      if (imageUrl) {
-        addHistoryEntry({
-          mood_text: currentMood,
+    setMoodSearch(mood);
+    setStage('loading');
+    
+    // Add to local history
+    if (moodEntry && imageUrl) {
+      try {
+        // Convert to HistoryEntry format
+        const historyEntry: Partial<HistoryEntry> = {
+          mood_text: mood,
+          mood: mood, // for backwards compatibility
           image_url: imageUrl,
-          imagePlaceholder: imageUrl,
-          mood: currentMood,
+          imagePlaceholder: imageUrl, // for backwards compatibility
           quote: moodEntry.quote,
           quote_author: moodEntry.quote_author,
-        });
-
-        // Update streak
-        const newStreak = incrementSessionStreak();
-        setSessionStreak(newStreak);
-        if (newStreak > 1) {
-          toast.success(`${newStreak} canvases created! 🎨`);
-        }
+          gradient_classes: moodEntry.gradient_classes,
+          created_at: new Date().toISOString(),
+          timestamp: Date.now(),
+        };
+        addHistoryEntry(historyEntry);
+      } catch (err) {
+        console.error('Error saving to history:', err);
       }
-    }
-  }, [moodEntry, imageUrl, currentMood, showArt]);
-
-  // Welcome message for first-time visitors
-  useEffect(() => {
-    if (isFirstVisit) {
-      const timer = setTimeout(() => {
-        toast("Welcome to Daily Mood Canvas! Express your mood and create a beautiful canvas.");
-      }, 1500);
-
-      return () => clearTimeout(timer);
-    }
-  }, [isFirstVisit]);
-
-  const handleShare = async () => {
-    if (!moodEntry) return;
-
-    try {
-      // Use Web Share API first if supported
-      if (navigator.share) {
-        await navigator.share({
-          title: 'My Daily Mood Canvas',
-          text: `My mood canvas for '${currentMood}': "${moodEntry.quote}" - ${moodEntry.quote_author} #DailyMoodCanvas`,
-          // If we had an actual deployed URL, we would add it here
-          // url: `https://dailymoodcanvas.com/share/${encodeURIComponent(currentMood)}`
-        });
-        toast.success("Shared successfully!");
-        return;
-      }
-      
-      // Fallback to clipboard copy
-      const shareText = `My mood canvas for '${currentMood}': "${moodEntry.quote}" - ${moodEntry.quote_author} #DailyMoodCanvas`;
-      await navigator.clipboard.writeText(shareText);
-      toast.success("Copied to clipboard!");
-    } catch (err) {
-      console.error("Share failed:", err);
-      toast.error("Couldn't share canvas");
     }
   };
 
-  const handleHistory = () => {
+  const handleCanvasReady = () => {
+    setStage('canvas');
+  };
+
+  const handleBackToSelector = () => {
+    setStage('selector');
+  };
+
+  const handleOpenHistory = () => {
     setShowHistory(true);
   };
 
-  const handleNewCanvas = () => {
-    setShowArt(false);
-    setCurrentMood('');
+  const handleCloseHistory = () => {
+    setShowHistory(false);
   };
 
-  // Show loading state
-  if (showArt && isLoading) {
+  if (isLoading) {
     return (
-      <Layout gradientClasses={gradientClasses}>
-        <div className="flex flex-col items-center justify-center h-full gap-3">
-          <div className="w-10 h-10 rounded-full border-4 border-canvas-accent/40 border-t-canvas-accent animate-spin" />
-          <div className="animate-pulse text-canvas-muted text-center">Creating your canvas...</div>
+      <Layout gradientClasses={moodEntry?.gradient_classes || ["from-yellow-50", "via-amber-100", "to-yellow-100"]}>
+        <div className="flex justify-center items-center">
+          <div className="w-8 h-8 border-4 border-t-canvas-accent border-canvas-border/30 rounded-full animate-spin"></div>
         </div>
       </Layout>
     );
   }
 
-  // Show error state
-  if (showArt && error) {
-    console.error("Error loading mood entry:", error);
+  if (error) {
     return (
-      <Layout gradientClasses={gradientClasses}>
-        <div className="flex items-center justify-center h-full">
-          <div className="text-red-600 bg-red-50 p-6 rounded-xl shadow-md border border-red-100 text-center">
-            <p className="mb-3">Sorry, we couldn't create your canvas. Please try again.</p>
-            <button
-              onClick={handleNewCanvas}
-              className="text-canvas-accent hover:underline"
-              type="button"
-            >
-              Try another mood
-            </button>
-          </div>
+      <Layout gradientClasses={["from-red-100", "to-red-300"]}>
+        <div className="flex flex-col justify-center items-center">
+          <h2 className="text-xl font-bold">Oops!</h2>
+          <p className="text-center">Something went wrong: {error.message}</p>
+          <Button onClick={() => setStage('selector')}>Try Again</Button>
         </div>
       </Layout>
     );
   }
 
   return (
-    <Layout onHeaderClick={handleNewCanvas} gradientClasses={gradientClasses}>
-      <div className="w-full flex flex-col items-center justify-center select-text">
-        {!showArt ? (
-          <MoodInput onSubmit={handleMoodSubmit} />
-        ) : moodEntry && imageUrl ? (
-          <ArtDisplay
-            mood={currentMood}
-            artData={{
-              moodKeyword: currentMood,
-              imagePlaceholder: imageUrl,
-              quote: moodEntry.quote,
-              quoteAuthor: moodEntry.quote_author,
-              gradientClasses: moodEntry.gradient_classes || ["from-amber-100", "to-orange-200"]
-            }}
-            onShare={handleShare}
-            onHistory={handleHistory}
-            onNewCanvas={handleNewCanvas}
-          />
-        ) : (
-          <div className="text-canvas-muted p-8 text-center bg-white/60 rounded-2xl shadow-md border border-canvas-border max-w-sm">
-            <p className="mb-3">No matching mood found.</p>
-            <button
-              onClick={handleNewCanvas}
-              className="text-canvas-accent hover:underline"
-              type="button"
-            >
-              Try another word
-            </button>
-          </div>
-        )}
-      </div>
+    <Layout gradientClasses={moodEntry?.gradient_classes || ["from-yellow-50", "via-amber-100", "to-yellow-100"]}>
+      {stage === 'selector' && (
+        <MoodSelector onSubmit={handleMoodSubmit} onHistoryOpen={handleOpenHistory} />
+      )}
+
+      {stage === 'loading' && (
+        <div className="flex justify-center items-center">
+          <div className="w-8 h-8 border-4 border-t-canvas-accent border-canvas-border/30 rounded-full animate-spin"></div>
+        </div>
+      )}
+
+      {stage === 'canvas' && moodEntry && imageUrl && (
+        <Canvas
+          moodEntry={moodEntry}
+          imageUrl={imageUrl}
+          onBack={handleBackToSelector}
+        />
+      )}
 
       {showHistory && (
-        <HistoryView entries={getHistory()} onClose={() => setShowHistory(false)} />
+        <HistoryView onClose={handleCloseHistory} entries={[]} />
       )}
     </Layout>
   );
