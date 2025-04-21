@@ -25,19 +25,41 @@ const Profile = () => {
       // Load history from Supabase
       (async () => {
         setIsLoading(true);
-        const { data, error } = await supabase
-          .from('user_mood_history')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+        
+        try {
+          // Note: Using (await supabase.from('user_mood_history')...) syntax to avoid TS errors
+          const { data, error } = await supabase
+            .from('user_mood_history')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
 
-        if (error) {
+          if (error) {
+            console.error('Failed to load history:', error);
+            toast.error('Failed to load history');
+            setHistory([]);
+          } else {
+            // Map the database entries to our HistoryEntry format
+            const historyEntries: HistoryEntry[] = data.map(item => ({
+              id: item.id,
+              user_id: item.user_id,
+              mood_text: item.mood_text,
+              mood: item.mood_text, // For backwards compatibility
+              mood_entry_id: item.mood_entry_id,
+              personal_note: item.personal_note,
+              image_url: item.image_url,
+              imagePlaceholder: item.image_url, // For backwards compatibility
+              gradient_classes: item.gradient_classes,
+              created_at: item.created_at
+            }));
+            setHistory(historyEntries);
+          }
+        } catch (err) {
+          console.error('Error fetching history:', err);
           toast.error('Failed to load history');
           setHistory([]);
-        } else {
-          // Map the database entries to our HistoryEntry format
-          setHistory(data || []);
         }
+        
         setIsLoading(false);
       })();
     }
@@ -52,18 +74,19 @@ const Profile = () => {
     if (!user) return;
     
     try {
-      // Save to Supabase
-      const { error } = await supabase
-        .from('user_mood_history')
-        .insert({
-          user_id: user.id,
-          mood_text: entry.mood_text || entry.mood || '',
-          personal_note: entry.personal_note || '',
-          image_url: entry.image_url || entry.imagePlaceholder || '',
-          gradient_classes: entry.gradient_classes || []
-        });
+      // Save to Supabase - use correct table name and fields
+      const { error } = await supabase.from('user_mood_history').insert({
+        user_id: user.id,
+        mood_text: entry.mood_text || entry.mood || '',
+        personal_note: entry.personal_note || '',
+        image_url: entry.image_url || entry.imagePlaceholder || '',
+        gradient_classes: entry.gradient_classes || []
+      });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error saving canvas:', error);
+        throw error;
+      }
       
       toast.success('Canvas saved to your favorites');
       
@@ -81,7 +104,7 @@ const Profile = () => {
         const { error } = await supabase
           .from('user_mood_history')
           .delete()
-          .eq('user_id', user.id);
+          .eq('user_id', user?.id);
         
         if (error) throw error;
         

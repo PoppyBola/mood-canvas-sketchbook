@@ -39,10 +39,12 @@ const Index = () => {
       // Add to history
       if (imageUrl) {
         addHistoryEntry({
-          mood: currentMood,
+          mood_text: currentMood,
+          image_url: imageUrl,
           imagePlaceholder: imageUrl,
+          mood: currentMood,
           quote: moodEntry.quote,
-          quoteAuthor: moodEntry.quote_author,
+          quote_author: moodEntry.quote_author,
         });
 
         // Update streak

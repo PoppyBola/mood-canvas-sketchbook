@@ -13,7 +13,7 @@ export interface HistoryEntry {
   mood?: string;
   imagePlaceholder?: string;
   quote?: string;
-  quoteAuthor?: string;
+  quote_author?: string;
   timestamp?: number;
 }
 
@@ -26,13 +26,15 @@ export const getHistory = (): HistoryEntry[] => {
   }
 };
 
-export const addHistoryEntry = (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => {
+export const addHistoryEntry = (entry: Partial<HistoryEntry>) => {
   const history = getHistory();
   const newEntry: HistoryEntry = {
     ...entry,
-    id: Date.now().toString(),
-    created_at: new Date().toISOString(),
-    timestamp: Date.now(),
+    id: entry.id || Date.now().toString(),
+    mood_text: entry.mood_text || entry.mood || '',
+    image_url: entry.image_url || entry.imagePlaceholder || '',
+    created_at: entry.created_at || new Date().toISOString(),
+    timestamp: entry.timestamp || Date.now(),
   };
   
   const updatedHistory = [newEntry, ...history].slice(0, 30);
