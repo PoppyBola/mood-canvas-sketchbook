@@ -37,15 +37,15 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onClose, entries }) => {
                   <div className="flex gap-4">
                     <div className="w-20 h-20 flex-shrink-0 overflow-hidden rounded-md border border-canvas-border">
                       <img
-                        src={entry.imagePlaceholder}
-                        alt={entry.mood}
+                        src={entry.image_url || entry.imagePlaceholder}
+                        alt={entry.mood_text || entry.mood}
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div>
-                      <p className="font-medium text-lg">{entry.mood}</p>
+                      <p className="font-medium text-lg">{entry.mood_text || entry.mood}</p>
                       <p className="text-xs text-canvas-muted mb-2">
-                        {formatDistanceToNow(entry.timestamp, { addSuffix: true })}
+                        {formatDistanceToNow(new Date(entry.created_at || entry.timestamp), { addSuffix: true })}
                       </p>
                       <p className="text-sm italic line-clamp-2">{entry.quote}</p>
                     </div>

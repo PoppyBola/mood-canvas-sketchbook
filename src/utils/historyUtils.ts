@@ -1,11 +1,20 @@
 
 export interface HistoryEntry {
   id: string;
-  mood: string;
-  imagePlaceholder: string;
-  quote: string;
-  quoteAuthor: string;
-  timestamp: number;
+  user_id?: string;
+  mood_text: string;
+  mood_entry_id?: string;
+  personal_note?: string;
+  image_url?: string;
+  gradient_classes?: string[];
+  created_at: string;
+  
+  // For backwards compatibility with local storage
+  mood?: string;
+  imagePlaceholder?: string;
+  quote?: string;
+  quoteAuthor?: string;
+  timestamp?: number;
 }
 
 export const getHistory = (): HistoryEntry[] => {
@@ -22,6 +31,7 @@ export const addHistoryEntry = (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) =
   const newEntry: HistoryEntry = {
     ...entry,
     id: Date.now().toString(),
+    created_at: new Date().toISOString(),
     timestamp: Date.now(),
   };
   
