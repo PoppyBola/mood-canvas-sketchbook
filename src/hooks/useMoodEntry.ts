@@ -17,90 +17,110 @@ interface MoodEntry {
 export const useMoodEntry = (searchTerm: string) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
-  const { data: moodEntry, isLoading, error } = useQuery({
+  const { data: moodEntry, isLoading, error, refetch } = useQuery({
     queryKey: ['moodEntry', searchTerm],
     queryFn: async (): Promise<MoodEntry | null> => {
       if (!searchTerm) return null;
 
       console.log('Searching for mood:', searchTerm);
       
-      // Try exact match first
-      let { data: exactMatches, error: exactError } = await supabase
-        .from('mood_entries')
-        .select('*')
-        .contains('mood_tags', [searchTerm.toLowerCase()])
-        .limit(5);
-
-      if (exactError) {
-        console.error('Error fetching exact matches:', exactError);
-        return null;
-      }
-
-      if (exactMatches && exactMatches.length > 0) {
-        console.log('Found exact matches:', exactMatches.length);
-        const randomMatch = exactMatches[Math.floor(Math.random() * exactMatches.length)];
-        return randomMatch;
-      }
-
-      // If no exact match, try fuzzy matching
-      const { data: allEntries } = await supabase
-        .from('mood_entries')
-        .select('id, mood_tags');
-
-      if (!allEntries || allEntries.length === 0) {
-        console.log('No entries found in database');
-        return null;
-      }
-
-      // Extract unique tags
-      const allTags = allEntries.flatMap(entry => entry.mood_tags);
-      const uniqueTags = Array.from(new Set(allTags));
-      
-      console.log('Available tags for fuzzy matching:', uniqueTags);
-      
-      const fuse = new Fuse(uniqueTags, {
-        threshold: 0.4,
-        minMatchCharLength: 2
-      });
-
-      const fuzzyResults = fuse.search(searchTerm);
-      
-      if (fuzzyResults.length > 0) {
-        const matchedTag = fuzzyResults[0].item;
-        console.log(`Fuzzy matched "${searchTerm}" to "${matchedTag}"`);
-        
-        let { data: fuzzyMatches, error: fuzzyError } = await supabase
+      try {
+        // Try exact match first with case-insensitive array containment
+        const { data: exactMatches, error: exactError } = await supabase
           .from('mood_entries')
           .select('*')
-          .contains('mood_tags', [matchedTag])
+          .contains('mood_tags', [searchTerm.toLowerCase()]);
+
+        if (exactError) {
+          console.error('Error fetching exact matches:', exactError);
+          throw new Error(`Failed to search moods: ${exactError.message}`);
+        }
+
+        if (exactMatches && exactMatches.length > 0) {
+          console.log('Found exact matches:', exactMatches.length);
+          const randomMatch = exactMatches[Math.floor(Math.random() * exactMatches.length)];
+          return randomMatch;
+        }
+
+        // If no exact match, try fuzzy matching
+        const { data: allEntries, error: allError } = await supabase
+          .from('mood_entries')
+          .select('id, mood_tags');
+
+        if (allError) {
+          console.error('Error fetching all entries:', allError);
+          throw new Error(`Failed to get mood entries: ${allError.message}`);
+        }
+
+        if (!allEntries || allEntries.length === 0) {
+          console.log('No entries found in database');
+          throw new Error('No mood entries found in the database');
+        }
+
+        // Extract unique tags for fuzzy matching
+        const allTags: string[] = [];
+        allEntries.forEach(entry => {
+          if (entry.mood_tags && Array.isArray(entry.mood_tags)) {
+            entry.mood_tags.forEach(tag => allTags.push(tag));
+          }
+        });
+        
+        const uniqueTags = Array.from(new Set(allTags));
+        
+        console.log('Available tags for fuzzy matching:', uniqueTags);
+        
+        const fuse = new Fuse(uniqueTags, {
+          threshold: 0.4,
+          minMatchCharLength: 2
+        });
+
+        const fuzzyResults = fuse.search(searchTerm);
+        
+        if (fuzzyResults.length > 0) {
+          const matchedTag = fuzzyResults[0].item;
+          console.log(`Fuzzy matched "${searchTerm}" to "${matchedTag}"`);
+          
+          const { data: fuzzyMatches, error: fuzzyError } = await supabase
+            .from('mood_entries')
+            .select('*')
+            .contains('mood_tags', [matchedTag]);
+
+          if (fuzzyError) {
+            console.error('Error fetching fuzzy matches:', fuzzyError);
+            throw new Error(`Failed to fetch fuzzy matches: ${fuzzyError.message}`);
+          }
+
+          if (fuzzyMatches && fuzzyMatches.length > 0) {
+            const randomFuzzyMatch = fuzzyMatches[Math.floor(Math.random() * fuzzyMatches.length)];
+            return randomFuzzyMatch;
+          }
+        }
+
+        // Fallback: Get a random entry
+        console.log('Falling back to random entry');
+        const { data: randomEntries, error: randomError } = await supabase
+          .from('mood_entries')
+          .select('*')
           .limit(5);
 
-        if (fuzzyError) {
-          console.error('Error fetching fuzzy matches:', fuzzyError);
-          return null;
+        if (randomError) {
+          console.error('Error fetching random entries:', randomError);
+          throw new Error(`Failed to fetch random entries: ${randomError.message}`);
         }
 
-        if (fuzzyMatches && fuzzyMatches.length > 0) {
-          const randomFuzzyMatch = fuzzyMatches[Math.floor(Math.random() * fuzzyMatches.length)];
-          return randomFuzzyMatch;
+        if (randomEntries && randomEntries.length > 0) {
+          return randomEntries[Math.floor(Math.random() * randomEntries.length)];
         }
+
+        console.log('No entries found at all');
+        throw new Error('No suitable mood matches found');
+      } catch (err: any) {
+        console.error('Error in useMoodEntry:', err);
+        throw err;
       }
-
-      // Fallback: Get a random entry
-      console.log('Falling back to random entry');
-      const { data: randomEntries } = await supabase
-        .from('mood_entries')
-        .select('*')
-        .limit(5);
-
-      if (randomEntries && randomEntries.length > 0) {
-        return randomEntries[Math.floor(Math.random() * randomEntries.length)];
-      }
-
-      console.log('No entries found at all');
-      return null;
     },
     enabled: searchTerm !== '',
+    retry: 1,
   });
 
   useEffect(() => {
@@ -119,6 +139,11 @@ export const useMoodEntry = (searchTerm: string) => {
           // Remove 'public/' prefix if present (common mistake when working with Supabase storage)
           if (storagePath.startsWith('public/')) {
             storagePath = storagePath.replace('public/', '');
+          }
+          
+          // Remove 'mood_images/' prefix if duplicated in the path
+          if (storagePath.startsWith('mood_images/mood_images/')) {
+            storagePath = storagePath.replace('mood_images/', '');
           }
           
           // Get public URL from Supabase storage
@@ -147,5 +172,5 @@ export const useMoodEntry = (searchTerm: string) => {
     }
   }, [moodEntry]);
 
-  return { moodEntry, imageUrl, isLoading, error };
+  return { moodEntry, imageUrl, isLoading, error, refetch };
 };
