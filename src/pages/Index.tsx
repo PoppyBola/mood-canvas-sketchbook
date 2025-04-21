@@ -7,9 +7,11 @@ import HistoryView from '../components/history/HistoryView';
 import { useMoodEntry } from '../hooks/useMoodEntry';
 import { addHistoryEntry, getHistory } from '../utils/historyUtils';
 import { getSessionStreak, incrementSessionStreak } from '../utils/sessionUtils';
+import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 
 const Index = () => {
+  const { user } = useAuth();
   const [currentMood, setCurrentMood] = useState<string>('');
   const [showArt, setShowArt] = useState<boolean>(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -73,6 +75,8 @@ const Index = () => {
         await navigator.share({
           title: 'My Daily Mood Canvas',
           text: `My mood canvas for '${currentMood}': "${moodEntry.quote}" - ${moodEntry.quote_author} #DailyMoodCanvas`,
+          // If we had an actual deployed URL, we would add it here
+          // url: `https://dailymoodcanvas.com/share/${encodeURIComponent(currentMood)}`
         });
         toast.success("Shared successfully!");
         return;
@@ -86,6 +90,10 @@ const Index = () => {
       console.error("Share failed:", err);
       toast.error("Couldn't share canvas");
     }
+  };
+
+  const handleHistory = () => {
+    setShowHistory(true);
   };
 
   const handleNewCanvas = () => {
@@ -112,7 +120,14 @@ const Index = () => {
       <Layout gradientClasses={gradientClasses}>
         <div className="flex items-center justify-center h-full">
           <div className="text-red-600 bg-red-50 p-6 rounded-xl shadow-md border border-red-100 text-center">
-            Sorry, we couldn't create your canvas. Please try again.
+            <p className="mb-3">Sorry, we couldn't create your canvas. Please try again.</p>
+            <button
+              onClick={handleNewCanvas}
+              className="text-canvas-accent hover:underline"
+              type="button"
+            >
+              Try another mood
+            </button>
           </div>
         </div>
       </Layout>
@@ -135,7 +150,7 @@ const Index = () => {
               gradientClasses: moodEntry.gradient_classes || ["from-amber-100", "to-orange-200"]
             }}
             onShare={handleShare}
-            onHistory={() => setShowHistory(true)}
+            onHistory={handleHistory}
             onNewCanvas={handleNewCanvas}
           />
         ) : (

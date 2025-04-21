@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Fuse from 'fuse.js';
@@ -10,6 +11,7 @@ interface MoodEntry {
   image_path: string;
   mood_tags: string[];
   gradient_classes: string[];
+  description?: string;
 }
 
 export const useMoodEntry = (searchTerm: string) => {
@@ -108,19 +110,34 @@ export const useMoodEntry = (searchTerm: string) => {
           // Check if it's an external URL
           if (moodEntry.image_path.startsWith('http')) {
             setImageUrl(moodEntry.image_path);
+            return;
+          }
+          
+          // Handle path formats
+          let storagePath = moodEntry.image_path;
+          
+          // Remove 'public/' prefix if present (common mistake when working with Supabase storage)
+          if (storagePath.startsWith('public/')) {
+            storagePath = storagePath.replace('public/', '');
+          }
+          
+          // Get public URL from Supabase storage
+          const { data } = supabase.storage
+            .from('mood_images')
+            .getPublicUrl(storagePath);
+          
+          if (data?.publicUrl) {
+            console.log('Image URL:', data.publicUrl);
+            setImageUrl(data.publicUrl);
           } else {
-            // Otherwise, it's a Supabase storage path
-            const { data } = supabase.storage
-              .from('mood_images')
-              .getPublicUrl(moodEntry.image_path);
-            
-            if (data?.publicUrl) {
-              console.log('Image URL:', data.publicUrl);
-              setImageUrl(data.publicUrl);
-            }
+            console.warn('Could not get public URL for path:', storagePath);
+            // Fallback to a placeholder
+            setImageUrl('https://placehold.co/600x800/f8f0e3/957DAD?text=Mood+Canvas');
           }
         } catch (err) {
           console.error('Error getting image URL:', err);
+          // Fallback to a placeholder
+          setImageUrl('https://placehold.co/600x800/f8f0e3/957DAD?text=Mood+Canvas');
         }
       }
     };

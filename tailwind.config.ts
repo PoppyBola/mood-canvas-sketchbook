@@ -30,6 +30,7 @@ export default {
 					foreground: '#463F3A', // Warm gray
 					muted: '#8A817C', // Muted warm gray
 					accent: '#E5989B', // Soft terracotta
+					accent2: '#BCD8C1', // Soft sage green
 					border: '#F4F1E9', // Warm light gray
 					highlight: '#F4EBD0', // Soft cream
 					secondary: '#9D8189' // Dusty rose
@@ -81,6 +82,7 @@ export default {
 				'fade-up': 'fadeUp 0.5s ease-out',
 				'scale-in': 'scaleIn 0.2s ease-out',
 				'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+				float: 'float 3s ease-in-out infinite',
 			},
 			keyframes: {
 				fadeUp: {
@@ -102,6 +104,11 @@ export default {
 			boxShadow: {
 				'warm': '0 4px 14px 0 rgba(70, 63, 58, 0.1)',
 				'warm-lg': '0 10px 30px -5px rgba(70, 63, 58, 0.15)',
+				'inner-glow': 'inset 0 0 20px rgba(255, 240, 230, 0.5)',
+			},
+			transitionProperty: {
+				'height': 'height',
+				'spacing': 'margin, padding',
 			},
 		}
 	},
