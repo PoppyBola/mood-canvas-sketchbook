@@ -13,7 +13,7 @@ const Index = () => {
   const [currentMood, setCurrentMood] = useState<string>('');
   const [showArt, setShowArt] = useState<boolean>(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [gradientClasses, setGradientClasses] = useState<string[]>(["from-amber-50", "via-orange-50", "to-yellow-50"]);
+  const [gradientClasses, setGradientClasses] = useState<string[]>(["from-amber-100", "via-orange-150", "to-yellow-100"]);
   const [sessionStreak, setSessionStreak] = useState(getSessionStreak());
   const [isFirstVisit, setIsFirstVisit] = useState(true);
 
@@ -29,64 +29,62 @@ const Index = () => {
   // Effect when moodEntry changes
   useEffect(() => {
     if (moodEntry && showArt) {
-      console.log("Mood entry loaded:", moodEntry);
-      
+      // Apply gradient for warmth and smooth transition
       if (moodEntry.gradient_classes && moodEntry.gradient_classes.length > 0) {
         setGradientClasses(moodEntry.gradient_classes);
       }
-      
+
       // Add to history
       if (imageUrl) {
         addHistoryEntry({
           mood: currentMood,
           imagePlaceholder: imageUrl,
           quote: moodEntry.quote,
-          quoteAuthor: moodEntry.quote_author
+          quoteAuthor: moodEntry.quote_author,
         });
 
         // Update streak
         const newStreak = incrementSessionStreak();
         setSessionStreak(newStreak);
         if (newStreak > 1) {
-          toast(`${newStreak} canvases created! 🎨`);
+          toast.success(`${newStreak} canvases created! 🎨`);
         }
       }
     }
   }, [moodEntry, imageUrl, currentMood, showArt]);
-  
+
   // Welcome message for first-time visitors
   useEffect(() => {
     if (isFirstVisit) {
       const timer = setTimeout(() => {
         toast("Welcome to Daily Mood Canvas! Express your mood and create a beautiful canvas.");
       }, 1500);
-      
+
       return () => clearTimeout(timer);
     }
   }, [isFirstVisit]);
 
   const handleShare = async () => {
     if (!moodEntry) return;
-    
+
     try {
-      // Try to use Web Share API first
+      // Use Web Share API first if supported
       if (navigator.share) {
         await navigator.share({
           title: 'My Daily Mood Canvas',
           text: `My mood canvas for '${currentMood}': "${moodEntry.quote}" - ${moodEntry.quote_author} #DailyMoodCanvas`,
-          // We can't share the image directly via Web Share API in most cases
         });
-        toast("Shared successfully!");
+        toast.success("Shared successfully!");
         return;
       }
       
-      // Fallback to clipboard
+      // Fallback to clipboard copy
       const shareText = `My mood canvas for '${currentMood}': "${moodEntry.quote}" - ${moodEntry.quote_author} #DailyMoodCanvas`;
       await navigator.clipboard.writeText(shareText);
-      toast("Copied to clipboard!");
+      toast.success("Copied to clipboard!");
     } catch (err) {
       console.error("Share failed:", err);
-      toast("Couldn't share canvas");
+      toast.error("Couldn't share canvas");
     }
   };
 
@@ -100,8 +98,8 @@ const Index = () => {
     return (
       <Layout gradientClasses={gradientClasses}>
         <div className="flex flex-col items-center justify-center h-full gap-3">
-          <div className="w-8 h-8 rounded-full border-4 border-canvas-accent/40 border-t-canvas-accent animate-spin"></div>
-          <div className="animate-pulse text-canvas-muted">Creating your canvas...</div>
+          <div className="w-10 h-10 rounded-full border-4 border-canvas-accent/40 border-t-canvas-accent animate-spin" />
+          <div className="animate-pulse text-canvas-muted text-center">Creating your canvas...</div>
         </div>
       </Layout>
     );
@@ -113,7 +111,7 @@ const Index = () => {
     return (
       <Layout gradientClasses={gradientClasses}>
         <div className="flex items-center justify-center h-full">
-          <div className="text-red-500 bg-red-50 p-6 rounded-lg shadow-md border border-red-100">
+          <div className="text-red-600 bg-red-50 p-6 rounded-xl shadow-md border border-red-100 text-center">
             Sorry, we couldn't create your canvas. Please try again.
           </div>
         </div>
@@ -123,41 +121,39 @@ const Index = () => {
 
   return (
     <Layout onHeaderClick={handleNewCanvas} gradientClasses={gradientClasses}>
-      <div className="w-full flex flex-col items-center justify-center">
+      <div className="w-full flex flex-col items-center justify-center select-text">
         {!showArt ? (
           <MoodInput onSubmit={handleMoodSubmit} />
         ) : moodEntry && imageUrl ? (
-          <ArtDisplay 
-            mood={currentMood} 
+          <ArtDisplay
+            mood={currentMood}
             artData={{
               moodKeyword: currentMood,
               imagePlaceholder: imageUrl,
               quote: moodEntry.quote,
               quoteAuthor: moodEntry.quote_author,
-              gradientClasses: moodEntry.gradient_classes
+              gradientClasses: moodEntry.gradient_classes || ["from-amber-100", "to-orange-200"]
             }}
             onShare={handleShare}
             onHistory={() => setShowHistory(true)}
             onNewCanvas={handleNewCanvas}
           />
         ) : (
-          <div className="text-canvas-muted p-8 text-center bg-white/50 rounded-xl shadow-md">
+          <div className="text-canvas-muted p-8 text-center bg-white/60 rounded-2xl shadow-md border border-canvas-border max-w-sm">
             <p className="mb-3">No matching mood found.</p>
-            <button 
-              onClick={handleNewCanvas} 
+            <button
+              onClick={handleNewCanvas}
               className="text-canvas-accent hover:underline"
+              type="button"
             >
               Try another word
             </button>
           </div>
         )}
       </div>
-      
+
       {showHistory && (
-        <HistoryView
-          entries={getHistory()}
-          onClose={() => setShowHistory(false)}
-        />
+        <HistoryView entries={getHistory()} onClose={() => setShowHistory(false)} />
       )}
     </Layout>
   );

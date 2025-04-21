@@ -12,30 +12,36 @@ export type Database = {
       mood_entries: {
         Row: {
           created_at: string | null
+          description: string | null
           gradient_classes: string[]
           id: string
           image_path: string
           mood_tags: string[]
+          popularity_score: number | null
           quote: string
           quote_author: string
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          description?: string | null
           gradient_classes?: string[]
           id?: string
           image_path: string
           mood_tags?: string[]
+          popularity_score?: number | null
           quote: string
           quote_author: string
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          description?: string | null
           gradient_classes?: string[]
           id?: string
           image_path?: string
           mood_tags?: string[]
+          popularity_score?: number | null
           quote?: string
           quote_author?: string
           updated_at?: string | null

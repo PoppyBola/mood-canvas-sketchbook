@@ -10,18 +10,24 @@ interface LayoutProps {
   gradientClasses?: string[];
 }
 
-const Layout: React.FC<LayoutProps> = ({ 
-  children, 
-  onHeaderClick, 
-  gradientClasses = ["from-amber-50", "via-orange-50", "to-yellow-50"] 
+const Layout: React.FC<LayoutProps> = ({
+  children,
+  onHeaderClick,
+  gradientClasses = ["from-amber-100", "via-orange-150", "to-yellow-100"]
 }) => {
   const gradientClassNames = [`bg-gradient-to-br`, ...gradientClasses].join(' ');
   const greeting = getGreeting();
-  
+
   return (
-    <div className={`flex flex-col min-h-full transition-colors duration-1500 ease-in-out ${gradientClassNames}`}>
-      <Header onClick={onHeaderClick} greeting={greeting} />
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 w-full max-w-md mx-auto">
+    <div
+      className={`flex flex-col min-h-full transition-colors duration-[1500ms] ease-in-out ${gradientClassNames} font-sans`}
+      onClick={onHeaderClick}
+      role={onHeaderClick ? "button" : undefined}
+      tabIndex={onHeaderClick ? 0 : undefined}
+      onKeyDown={(e) => { if (onHeaderClick && (e.key === 'Enter' || e.key === ' ')) onHeaderClick(); }}
+    >
+      <Header />
+      <main className="flex-1 flex flex-col items-center justify-center px-6 py-8 w-full max-w-md mx-auto select-text">
         {children}
       </main>
       <Footer />
