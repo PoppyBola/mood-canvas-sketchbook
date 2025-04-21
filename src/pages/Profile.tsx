@@ -25,9 +25,9 @@ const Profile = () => {
       // Load history from Supabase
       (async () => {
         setIsLoading(true);
-        
+
         try {
-          // Note: Using (await supabase.from('user_mood_history')...) syntax to avoid TS errors
+          // Fetch from user_mood_history (not a relation arg!)
           const { data, error } = await supabase
             .from('user_mood_history')
             .select('*')
@@ -39,18 +39,24 @@ const Profile = () => {
             toast.error('Failed to load history');
             setHistory([]);
           } else {
-            // Map the database entries to our HistoryEntry format
-            const historyEntries: HistoryEntry[] = data.map(item => ({
+            // Defensive: confirm data is array
+            const safeData: any[] = Array.isArray(data) ? data : [];
+            // Map result to HistoryEntry type, merging with local compatibility fields
+            const historyEntries: HistoryEntry[] = safeData.map((item) => ({
               id: item.id,
-              user_id: item.user_id,
+              user_id: item.user_id ?? undefined,
               mood_text: item.mood_text,
-              mood: item.mood_text, // For backwards compatibility
-              mood_entry_id: item.mood_entry_id,
-              personal_note: item.personal_note,
-              image_url: item.image_url,
-              imagePlaceholder: item.image_url, // For backwards compatibility
-              gradient_classes: item.gradient_classes,
-              created_at: item.created_at
+              mood: item.mood_text, // backward compatibility
+              mood_entry_id: item.mood_entry_id ?? undefined,
+              personal_note: item.personal_note ?? undefined,
+              image_url: item.image_url ?? '',
+              imagePlaceholder: item.image_url ?? '', // local compatible
+              gradient_classes: item.gradient_classes ?? [],
+              created_at: item.created_at ?? '',
+              // For backwards compat:
+              quote: undefined,
+              quote_author: undefined,
+              timestamp: undefined,
             }));
             setHistory(historyEntries);
           }
@@ -59,7 +65,7 @@ const Profile = () => {
           toast.error('Failed to load history');
           setHistory([]);
         }
-        
+
         setIsLoading(false);
       })();
     }
@@ -72,25 +78,26 @@ const Profile = () => {
 
   const handleSaveCanvas = async (entry: HistoryEntry) => {
     if (!user) return;
-    
+
     try {
-      // Save to Supabase - use correct table name and fields
-      const { error } = await supabase.from('user_mood_history').insert({
-        user_id: user.id,
-        mood_text: entry.mood_text || entry.mood || '',
-        personal_note: entry.personal_note || '',
-        image_url: entry.image_url || entry.imagePlaceholder || '',
-        gradient_classes: entry.gradient_classes || []
-      });
-      
+      // Insert into user_mood_history with correct fields
+      const { error } = await supabase
+        .from('user_mood_history')
+        .insert([
+          {
+            user_id: user.id,
+            mood_text: entry.mood_text || entry.mood || '',
+            personal_note: entry.personal_note || '',
+            image_url: entry.image_url || entry.imagePlaceholder || '',
+            gradient_classes: entry.gradient_classes || [],
+          }
+        ]);
       if (error) {
         console.error('Error saving canvas:', error);
         throw error;
       }
-      
+
       toast.success('Canvas saved to your favorites');
-      
-      // Add to local saved state
       setSavedCanvases(prev => [entry, ...prev]);
     } catch (error) {
       console.error('Error saving canvas:', error);
@@ -105,9 +112,9 @@ const Profile = () => {
           .from('user_mood_history')
           .delete()
           .eq('user_id', user?.id);
-        
+
         if (error) throw error;
-        
+
         setHistory([]);
         toast.success('History cleared');
       } catch (error) {
@@ -140,7 +147,7 @@ const Profile = () => {
               <p className="text-sm text-canvas-muted">Member since {new Date(user?.created_at || Date.now()).toLocaleDateString()}</p>
             </div>
           </div>
-          
+
           <Button 
             variant="outline" 
             size="sm" 
@@ -224,7 +231,7 @@ const Profile = () => {
           <TabsContent value="saved" className="mt-4">
             <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-canvas-border p-4">
               <h3 className="font-medium mb-4">Saved Canvases</h3>
-              
+
               {savedCanvases.length === 0 ? (
                 <p className="text-center py-8 text-canvas-muted">
                   Your saved canvases will appear here. Click the heart icon on a canvas to save it.
@@ -262,3 +269,4 @@ const Profile = () => {
 };
 
 export default Profile;
+

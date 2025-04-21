@@ -48,6 +48,47 @@ export type Database = {
         }
         Relationships: []
       }
+      user_mood_history: {
+        Row: {
+          created_at: string | null
+          gradient_classes: string[] | null
+          id: string
+          image_url: string | null
+          mood_entry_id: string | null
+          mood_text: string
+          personal_note: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          gradient_classes?: string[] | null
+          id?: string
+          image_url?: string | null
+          mood_entry_id?: string | null
+          mood_text: string
+          personal_note?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          gradient_classes?: string[] | null
+          id?: string
+          image_url?: string | null
+          mood_entry_id?: string | null
+          mood_text?: string
+          personal_note?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_mood_history_mood_entry_id_fkey"
+            columns: ["mood_entry_id"]
+            isOneToOne: false
+            referencedRelation: "mood_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
