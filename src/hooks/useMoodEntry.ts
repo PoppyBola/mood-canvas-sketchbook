@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Fuse from 'fuse.js';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface MoodEntry {
   id: string;
@@ -22,104 +23,97 @@ export const useMoodEntry = (searchTerm: string) => {
     queryFn: async (): Promise<MoodEntry | null> => {
       if (!searchTerm) return null;
 
-      console.log('Searching for mood:', searchTerm);
-      
       try {
-        // Try exact match first with case-insensitive array containment
+        // Trim and convert to lowercase for consistent matching
+        const normalizedSearch = searchTerm.trim().toLowerCase();
+
+        // First, try exact match
         const { data: exactMatches, error: exactError } = await supabase
           .from('mood_entries')
           .select('*')
-          .contains('mood_tags', [searchTerm.toLowerCase()]);
+          .contains('mood_tags', [normalizedSearch]);
 
         if (exactError) {
-          console.error('Error fetching exact matches:', exactError);
-          throw new Error(`Failed to search moods: ${exactError.message}`);
+          console.error('Exact match error:', exactError);
+          throw exactError;
         }
 
         if (exactMatches && exactMatches.length > 0) {
-          console.log('Found exact matches:', exactMatches.length);
-          const randomMatch = exactMatches[Math.floor(Math.random() * exactMatches.length)];
-          return randomMatch;
+          return exactMatches[Math.floor(Math.random() * exactMatches.length)];
         }
 
-        // If no exact match, try fuzzy matching
+        // If no exact match, fetch all entries for fuzzy matching
         const { data: allEntries, error: allError } = await supabase
           .from('mood_entries')
-          .select('id, mood_tags');
+          .select('*');
 
         if (allError) {
-          console.error('Error fetching all entries:', allError);
-          throw new Error(`Failed to get mood entries: ${allError.message}`);
+          console.error('Fetching all entries error:', allError);
+          throw allError;
         }
 
         if (!allEntries || allEntries.length === 0) {
-          console.log('No entries found in database');
-          throw new Error('No mood entries found in the database');
+          toast.error('No mood entries found');
+          return null;
         }
 
-        // Extract unique tags for fuzzy matching
-        const allTags: string[] = [];
-        allEntries.forEach(entry => {
-          if (entry.mood_tags && Array.isArray(entry.mood_tags)) {
-            entry.mood_tags.forEach(tag => allTags.push(tag));
-          }
-        });
-        
-        const uniqueTags = Array.from(new Set(allTags));
-        
-        console.log('Available tags for fuzzy matching:', uniqueTags);
-        
+        // Collect all unique tags
+        const allTags = allEntries.flatMap(entry => 
+          entry.mood_tags.map(tag => tag.toLowerCase())
+        );
+        const uniqueTags = [...new Set(allTags)];
+
+        // Perform fuzzy matching on tags
         const fuse = new Fuse(uniqueTags, {
           threshold: 0.4,
           minMatchCharLength: 2
         });
 
-        const fuzzyResults = fuse.search(searchTerm);
+        const fuzzyResults = fuse.search(normalizedSearch);
         
         if (fuzzyResults.length > 0) {
-          const matchedTag = fuzzyResults[0].item;
-          console.log(`Fuzzy matched "${searchTerm}" to "${matchedTag}"`);
+          const bestMatch = fuzzyResults[0].item;
           
           const { data: fuzzyMatches, error: fuzzyError } = await supabase
             .from('mood_entries')
             .select('*')
-            .contains('mood_tags', [matchedTag]);
+            .contains('mood_tags', [bestMatch]);
 
           if (fuzzyError) {
-            console.error('Error fetching fuzzy matches:', fuzzyError);
-            throw new Error(`Failed to fetch fuzzy matches: ${fuzzyError.message}`);
+            console.error('Fuzzy match error:', fuzzyError);
+            throw fuzzyError;
           }
 
           if (fuzzyMatches && fuzzyMatches.length > 0) {
-            const randomFuzzyMatch = fuzzyMatches[Math.floor(Math.random() * fuzzyMatches.length)];
-            return randomFuzzyMatch;
+            return fuzzyMatches[Math.floor(Math.random() * fuzzyMatches.length)];
           }
         }
 
-        // Fallback: Get a random entry
-        console.log('Falling back to random entry');
-        const { data: randomEntries, error: randomError } = await supabase
-          .from('mood_entries')
-          .select('*')
-          .limit(5);
+        // Fallback: Get a random entry if no matches found
+        return allEntries[Math.floor(Math.random() * allEntries.length)];
+      } catch (err) {
+        console.error('Mood entry fetch error:', err);
+        toast.error('Failed to find a mood match. Using a random mood.');
+        
+        // Fetch a random entry as ultimate fallback
+        try {
+          const { data: randomEntries, error: randomError } = await supabase
+            .from('mood_entries')
+            .select('*')
+            .limit(5);
 
-        if (randomError) {
-          console.error('Error fetching random entries:', randomError);
-          throw new Error(`Failed to fetch random entries: ${randomError.message}`);
+          if (randomError) throw randomError;
+          
+          return randomEntries 
+            ? randomEntries[Math.floor(Math.random() * randomEntries.length)]
+            : null;
+        } catch (fallbackErr) {
+          console.error('Fallback random entry error:', fallbackErr);
+          return null;
         }
-
-        if (randomEntries && randomEntries.length > 0) {
-          return randomEntries[Math.floor(Math.random() * randomEntries.length)];
-        }
-
-        console.log('No entries found at all');
-        throw new Error('No suitable mood matches found');
-      } catch (err: any) {
-        console.error('Error in useMoodEntry:', err);
-        throw err;
       }
     },
-    enabled: searchTerm !== '',
+    enabled: !!searchTerm,
     retry: 1,
   });
 
@@ -133,36 +127,24 @@ export const useMoodEntry = (searchTerm: string) => {
             return;
           }
           
-          // Handle path formats
-          let storagePath = moodEntry.image_path;
+          // Handle Supabase storage paths
+          let storagePath = moodEntry.image_path.replace(/^public\//, '');
           
-          // Remove 'public/' prefix if present (common mistake when working with Supabase storage)
-          if (storagePath.startsWith('public/')) {
-            storagePath = storagePath.replace('public/', '');
-          }
-          
-          // Remove 'mood_images/' prefix if duplicated in the path
-          if (storagePath.startsWith('mood_images/mood_images/')) {
-            storagePath = storagePath.replace('mood_images/', '');
-          }
-          
-          // Get public URL from Supabase storage
           const { data } = supabase.storage
             .from('mood_images')
             .getPublicUrl(storagePath);
           
           if (data?.publicUrl) {
-            console.log('Image URL:', data.publicUrl);
             setImageUrl(data.publicUrl);
           } else {
-            console.warn('Could not get public URL for path:', storagePath);
             // Fallback to a placeholder
             setImageUrl('https://placehold.co/600x800/f8f0e3/957DAD?text=Mood+Canvas');
+            toast.warning('Could not load mood image');
           }
         } catch (err) {
-          console.error('Error getting image URL:', err);
-          // Fallback to a placeholder
+          console.error('Image URL error:', err);
           setImageUrl('https://placehold.co/600x800/f8f0e3/957DAD?text=Mood+Canvas');
+          toast.warning('Error loading mood image');
         }
       }
     };
@@ -172,5 +154,11 @@ export const useMoodEntry = (searchTerm: string) => {
     }
   }, [moodEntry]);
 
-  return { moodEntry, imageUrl, isLoading, error, refetch };
+  return { 
+    moodEntry, 
+    imageUrl, 
+    isLoading, 
+    error, 
+    refetch 
+  };
 };
