@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { HistoryEntry, getHistory } from '../utils/historyUtils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User, LogOut, Heart, Clock, Trash2 } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Profile = () => {
   const { user, signOut } = useAuth();
@@ -16,6 +17,7 @@ const Profile = () => {
   const [savedCanvases, setSavedCanvases] = useState<HistoryEntry[]>([]);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const isMobile = useIsMobile();
 
   // If not authenticated, redirect to login
   useEffect(() => {
@@ -137,8 +139,8 @@ const Profile = () => {
 
   return (
     <Layout gradientClasses={["from-yellow-50", "via-amber-100", "to-yellow-100"]}>
-      <div className="w-full max-w-md mx-auto space-y-8">
-        <div className="flex justify-between items-center">
+      <div className="w-full max-w-4xl mx-auto space-y-8 px-4">
+        <div className="flex justify-between items-center flex-wrap gap-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-canvas-border flex items-center justify-center">
               <User className="w-6 h-6 text-canvas-muted" />
@@ -194,7 +196,7 @@ const Profile = () => {
                   Your canvas history will appear here.
                 </p>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
+                <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-3 md:grid-cols-4'} gap-3`}>
                   {history.map((entry) => (
                     <div 
                       key={entry.id} 
@@ -238,7 +240,7 @@ const Profile = () => {
                   Your saved canvases will appear here. Click the heart icon on a canvas to save it.
                 </p>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
+                <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-3 md:grid-cols-4'} gap-3`}>
                   {savedCanvases.map((entry) => (
                     <div 
                       key={entry.id} 

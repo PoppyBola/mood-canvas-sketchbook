@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Settings, ImagePlus, Edit, Trash2 } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MoodEntry {
   id: string;
@@ -26,6 +28,7 @@ const Admin = () => {
   const [moodEntries, setMoodEntries] = useState<MoodEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false); // In a real app, check admin status from Supabase
+  const isMobile = useIsMobile();
 
   // For new mood entry form
   const [newQuote, setNewQuote] = useState('');
@@ -179,8 +182,8 @@ const Admin = () => {
 
   return (
     <Layout gradientClasses={["from-blue-50", "via-indigo-100", "to-blue-50"]}>
-      <div className="w-full max-w-4xl mx-auto space-y-8 px-4">
-        <div className="flex items-center justify-between">
+      <div className="w-full max-w-5xl mx-auto space-y-8 px-4">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-2">
             <Settings className="w-5 h-5 text-canvas-accent" />
             <h1 className="text-xl font-display">Admin Dashboard</h1>
@@ -194,7 +197,7 @@ const Admin = () => {
           </Button>
         </div>
 
-        <Tabs defaultValue="entries">
+        <Tabs defaultValue="entries" className="w-full">
           <TabsList className="grid grid-cols-3 w-full max-w-xl mx-auto">
             <TabsTrigger value="entries">Manage Entries</TabsTrigger>
             <TabsTrigger value="create">Create New</TabsTrigger>
@@ -205,59 +208,109 @@ const Admin = () => {
             <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-canvas-border p-4 overflow-hidden">
               <h2 className="font-medium mb-4">All Mood Entries ({moodEntries.length})</h2>
               
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-canvas-border/30">
-                    <tr>
-                      <th className="text-left p-2">Quote</th>
-                      <th className="text-left p-2">Author</th>
-                      <th className="text-left p-2">Tags</th>
-                      <th className="text-left p-2">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-canvas-border/20">
-                    {moodEntries.map((entry) => (
-                      <tr key={entry.id} className="hover:bg-canvas-border/10">
-                        <td className="p-2">
-                          <div className="max-w-xs truncate">{entry.quote}</div>
-                        </td>
-                        <td className="p-2">{entry.quote_author}</td>
-                        <td className="p-2">
-                          <div className="flex flex-wrap gap-1 max-w-[200px]">
-                            {entry.mood_tags.map((tag, i) => (
-                              <span
-                                key={i}
-                                className="text-xs bg-canvas-border/20 px-2 py-0.5 rounded-full"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="p-2">
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-canvas-muted hover:text-canvas-foreground"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
-                              onClick={() => handleDeleteMoodEntry(entry.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </td>
+              {isMobile ? (
+                // Mobile view: Card-based layout
+                <div className="space-y-4">
+                  {moodEntries.map((entry) => (
+                    <div 
+                      key={entry.id} 
+                      className="bg-white border border-canvas-border/30 rounded-lg p-3 shadow-sm"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1 flex-1">
+                          <p className="font-medium text-sm line-clamp-2">{entry.quote}</p>
+                          <p className="text-xs text-canvas-muted">{entry.quote_author}</p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-canvas-muted hover:text-canvas-foreground"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
+                            onClick={() => handleDeleteMoodEntry(entry.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {entry.mood_tags.slice(0, 3).map((tag, i) => (
+                          <span
+                            key={i}
+                            className="text-xs bg-canvas-border/20 px-2 py-0.5 rounded-full"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {entry.mood_tags.length > 3 && (
+                          <span className="text-xs text-canvas-muted">+{entry.mood_tags.length - 3} more</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                // Desktop view: Table layout
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-canvas-border/30">
+                      <tr>
+                        <th className="text-left p-2">Quote</th>
+                        <th className="text-left p-2">Author</th>
+                        <th className="text-left p-2">Tags</th>
+                        <th className="text-left p-2">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-canvas-border/20">
+                      {moodEntries.map((entry) => (
+                        <tr key={entry.id} className="hover:bg-canvas-border/10">
+                          <td className="p-2">
+                            <div className="max-w-xs truncate">{entry.quote}</div>
+                          </td>
+                          <td className="p-2">{entry.quote_author}</td>
+                          <td className="p-2">
+                            <div className="flex flex-wrap gap-1 max-w-[200px]">
+                              {entry.mood_tags.map((tag, i) => (
+                                <span
+                                  key={i}
+                                  className="text-xs bg-canvas-border/20 px-2 py-0.5 rounded-full"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="p-2">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-canvas-muted hover:text-canvas-foreground"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
+                                onClick={() => handleDeleteMoodEntry(entry.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
               
               {moodEntries.length === 0 && (
                 <p className="text-center py-8 text-canvas-muted">
@@ -275,7 +328,7 @@ const Admin = () => {
               </h2>
               
               <form onSubmit={handleCreateMoodEntry} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className={`grid grid-cols-1 ${isMobile ? '' : 'md:grid-cols-2'} gap-4`}>
                   <div className="space-y-2">
                     <label htmlFor="quote" className="text-sm font-medium">
                       Quote <span className="text-red-500">*</span>
@@ -322,7 +375,7 @@ const Admin = () => {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className={`grid grid-cols-1 ${isMobile ? '' : 'md:grid-cols-2'} gap-4`}>
                   <div className="space-y-2">
                     <label htmlFor="imagePath" className="text-sm font-medium">
                       Image Path <span className="text-red-500">*</span>
@@ -372,7 +425,7 @@ const Admin = () => {
                 <div className="pt-4">
                   <Button 
                     type="submit"
-                    className="w-full md:w-auto"
+                    className={isMobile ? "w-full" : "w-auto"}
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? 'Creating...' : 'Create Mood Entry'}
@@ -449,7 +502,7 @@ const Admin = () => {
                 {importLoading ? (
                   <div className="text-canvas-accent">Importing...</div>
                 ) : (
-                  <Button type="submit" disabled={importLoading}>
+                  <Button type="submit" disabled={importLoading} className={isMobile ? "w-full" : "w-auto"}>
                     Import CSV
                   </Button>
                 )}

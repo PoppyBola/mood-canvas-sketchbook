@@ -11,6 +11,7 @@ import { useMoodEntry } from '../hooks/useMoodEntry';
 import { addHistoryEntry, getHistory } from '../utils/historyUtils';
 import type { HistoryEntry } from '../utils/historyUtils';
 import HistoryView from '../components/history/HistoryView';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
   const [moodSearch, setMoodSearch] = useState('');
@@ -25,8 +26,48 @@ const Index = () => {
 
   // Load history entries on component mount
   useEffect(() => {
-    setHistoryEntries(getHistory());
-  }, []);
+    const loadHistory = async () => {
+      // First try to load from Supabase if user is logged in
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('user_mood_history')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(20);
+            
+          if (!error && data) {
+            // Convert Supabase data to HistoryEntry format
+            const entries: HistoryEntry[] = data.map((item: any) => ({
+              id: item.id,
+              user_id: item.user_id,
+              mood_text: item.mood_text,
+              mood: item.mood_text, // For backwards compatibility
+              image_url: item.image_url,
+              imagePlaceholder: item.image_url, // For backwards compatibility
+              created_at: item.created_at,
+              timestamp: new Date(item.created_at).getTime(),
+              gradient_classes: item.gradient_classes || [],
+              mood_entry_id: item.mood_entry_id,
+              personal_note: item.personal_note,
+              quote: "",
+              quote_author: ""
+            }));
+            setHistoryEntries(entries);
+            return;
+          }
+        } catch (err) {
+          console.error('Error fetching user history from Supabase:', err);
+        }
+      }
+      
+      // Fallback to local storage if Supabase fails or user not logged in
+      setHistoryEntries(getHistory());
+    };
+    
+    loadHistory();
+  }, [user]);
 
   // Watch for changes in mood entry and image URL to transition to canvas view
   useEffect(() => {
@@ -49,7 +90,7 @@ const Index = () => {
     setStage('loading');
   };
 
-  // Add to local history when canvas is shown
+  // Add to history when canvas is shown - save to Supabase if user is logged in
   useEffect(() => {
     if (stage === 'canvas' && moodEntry && imageUrl) {
       try {
@@ -66,13 +107,62 @@ const Index = () => {
           timestamp: Date.now(),
         };
         
-        addHistoryEntry(historyEntry);
-        setHistoryEntries(getHistory());
+        // Save to Supabase if user is logged in
+        if (user) {
+          (async () => {
+            try {
+              await supabase.from('user_mood_history').insert([{
+                user_id: user.id,
+                mood_text: moodSearch,
+                mood_entry_id: moodEntry.id,
+                image_url: imageUrl,
+                gradient_classes: moodEntry.gradient_classes,
+                created_at: new Date().toISOString()
+              }]);
+              
+              // Refresh history entries
+              const { data } = await supabase
+                .from('user_mood_history')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(20);
+                
+              if (data) {
+                const entries: HistoryEntry[] = data.map((item: any) => ({
+                  id: item.id,
+                  user_id: item.user_id,
+                  mood_text: item.mood_text,
+                  mood: item.mood_text,
+                  image_url: item.image_url,
+                  imagePlaceholder: item.image_url,
+                  created_at: item.created_at,
+                  timestamp: new Date(item.created_at).getTime(),
+                  gradient_classes: item.gradient_classes || [],
+                  mood_entry_id: item.mood_entry_id,
+                  personal_note: item.personal_note,
+                  quote: "",
+                  quote_author: ""
+                }));
+                setHistoryEntries(entries);
+              }
+            } catch (err) {
+              console.error('Error saving to Supabase:', err);
+              // Fallback to local storage if Supabase fails
+              addHistoryEntry(historyEntry);
+              setHistoryEntries(getHistory());
+            }
+          })();
+        } else {
+          // Save to local storage if user is not logged in
+          addHistoryEntry(historyEntry);
+          setHistoryEntries(getHistory());
+        }
       } catch (err) {
         console.error('Error saving to history:', err);
       }
     }
-  }, [stage, moodEntry, imageUrl, moodSearch]);
+  }, [stage, moodEntry, imageUrl, moodSearch, user]);
 
   const handleBackToSelector = () => {
     setStage('selector');
@@ -80,7 +170,42 @@ const Index = () => {
   };
 
   const handleOpenHistory = () => {
-    setHistoryEntries(getHistory());
+    // Refresh history before opening
+    if (user) {
+      supabase
+        .from('user_mood_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20)
+        .then(({ data }) => {
+          if (data) {
+            const entries: HistoryEntry[] = data.map((item: any) => ({
+              id: item.id,
+              user_id: item.user_id,
+              mood_text: item.mood_text,
+              mood: item.mood_text,
+              image_url: item.image_url,
+              imagePlaceholder: item.image_url,
+              created_at: item.created_at,
+              timestamp: new Date(item.created_at).getTime(),
+              gradient_classes: item.gradient_classes || [],
+              mood_entry_id: item.mood_entry_id,
+              personal_note: item.personal_note,
+              quote: "",
+              quote_author: ""
+            }));
+            setHistoryEntries(entries);
+          }
+        })
+        .catch(err => {
+          console.error('Error refreshing history:', err);
+          setHistoryEntries(getHistory());
+        });
+    } else {
+      setHistoryEntries(getHistory());
+    }
+    
     setShowHistory(true);
   };
 
