@@ -44,11 +44,12 @@ const NotificationSettings = () => {
     const loadPreferences = async () => {
       try {
         setLoading(true);
+        // Use a type assertion for the user_preferences table
         const { data, error } = await supabase
           .from('user_preferences')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .single() as { data: UserPreferences | null, error: any };
 
         if (error && error.code !== 'PGRST116') { // Not found error
           throw error;
@@ -77,12 +78,13 @@ const NotificationSettings = () => {
     try {
       setSaving(true);
       
+      // Use a type assertion for the upsert operation
       const { error } = await supabase
         .from('user_preferences')
         .upsert({
           user_id: user.id,
           ...preferences
-        });
+        }) as { data: any, error: any };
 
       if (error) throw error;
       

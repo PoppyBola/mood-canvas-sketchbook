@@ -14,6 +14,7 @@ interface DailyQuote {
   quote_author: string;
   mood_tags: string[];
   image_path: string;
+  popularity_score?: number; // Added popularity_score property
 }
 
 const DailyQuoteCard = () => {

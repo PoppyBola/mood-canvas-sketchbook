@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Bell, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 
+// Define the notification interface to match our database schema
 interface Notification {
   id: string;
   user_id: string;
@@ -32,17 +32,20 @@ const NotificationCenter: React.FC = () => {
     
     const loadNotifications = async () => {
       try {
+        // Use a type assertion to tell TypeScript we're working with the user_notifications table
         const { data, error } = await supabase
           .from('user_notifications')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
-          .limit(20);
+          .limit(20) as { data: Notification[] | null, error: any };
           
         if (error) throw error;
         
-        setNotifications(data || []);
-        setUnreadCount(data?.filter(n => !n.is_read).length || 0);
+        if (data) {
+          setNotifications(data);
+          setUnreadCount(data.filter(n => !n.is_read).length);
+        }
       } catch (err) {
         console.error('Error loading notifications:', err);
       }
@@ -83,11 +86,12 @@ const NotificationCenter: React.FC = () => {
       if (!user) return;
       
       try {
+        // Use a type assertion for the user_preferences table
         const { data, error } = await supabase
           .from('user_preferences')
           .select('notifications_enabled')
           .eq('user_id', user.id)
-          .single();
+          .single() as { data: { notifications_enabled: boolean } | null, error: any };
           
         if (error) throw error;
         
@@ -116,10 +120,11 @@ const NotificationCenter: React.FC = () => {
 
   const markAsRead = async (id: string) => {
     try {
+      // Use a type assertion for the update operation
       await supabase
         .from('user_notifications')
         .update({ is_read: true })
-        .eq('id', id);
+        .eq('id', id) as { data: any, error: any };
       
       // Update local state
       setNotifications(notifications.map(n => 
@@ -135,11 +140,12 @@ const NotificationCenter: React.FC = () => {
     if (notifications.length === 0) return;
     
     try {
+      // Use a type assertion for the update operation
       await supabase
         .from('user_notifications')
         .update({ is_read: true })
         .eq('user_id', user?.id)
-        .eq('is_read', false);
+        .eq('is_read', false) as { data: any, error: any };
       
       // Update local state
       setNotifications(notifications.map(n => ({ ...n, is_read: true })));
