@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { ArrowLeft, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface MoodEntry {
   id: string;
@@ -26,18 +27,15 @@ const Canvas: React.FC<CanvasProps> = ({ moodEntry, imageUrl, onBack }) => {
     }, 300);
     return () => clearTimeout(timer);
   }, []);
-
-  const mood = moodEntry.mood_tags?.[0] || 'your mood';
   
   const handleShare = () => {
-    // For now, just show a message that sharing is coming soon
     toast.success("Sharing functionality coming soon!");
   };
 
   return (
     <div className="w-full max-w-md space-y-4">
       <div className="text-center mb-2">
-        <h2 className="text-2xl font-medium text-canvas-foreground">Canvas for {mood}</h2>
+        <h2 className="text-2xl font-medium text-canvas-foreground">Your Daily Quote</h2>
       </div>
       
       <div 
@@ -47,14 +45,25 @@ const Canvas: React.FC<CanvasProps> = ({ moodEntry, imageUrl, onBack }) => {
         <div className="relative aspect-[4/5] bg-white">
           <img
             src={imageUrl}
-            alt={`Mood canvas for ${mood}`}
+            alt="Mood canvas background"
             className="w-full h-full object-cover"
           />
           
-          {/* Quote overlay - positioned directly on image */}
-          <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/70 via-black/40 to-transparent p-6 text-white">
-            <blockquote className="font-medium text-lg mb-2">"{moodEntry.quote}"</blockquote>
-            <cite className="text-sm opacity-90">— {moodEntry.quote_author}</cite>
+          {/* Centered quote overlay with improved typography */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-black/40 backdrop-blur-[2px]">
+            <div className="max-w-[85%] text-center space-y-4">
+              <blockquote 
+                className={cn(
+                  "font-display text-2xl md:text-3xl text-white leading-relaxed",
+                  "tracking-wide drop-shadow-lg"
+                )}
+              >
+                "{moodEntry.quote}"
+              </blockquote>
+              <cite className="block text-sm md:text-base text-white/90 font-sans mt-2 italic">
+                — {moodEntry.quote_author}
+              </cite>
+            </div>
           </div>
         </div>
       </div>

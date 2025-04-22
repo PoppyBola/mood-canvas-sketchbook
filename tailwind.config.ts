@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -105,6 +104,10 @@ export default {
 				'warm': '0 4px 14px 0 rgba(70, 63, 58, 0.1)',
 				'warm-lg': '0 10px 30px -5px rgba(70, 63, 58, 0.15)',
 				'inner-glow': 'inset 0 0 20px rgba(255, 240, 230, 0.5)',
+				'quote': '0 4px 30px rgba(0, 0, 0, 0.3)',
+			},
+			dropShadow: {
+				'lg': '0 4px 8px rgba(0, 0, 0, 0.3)',
 			},
 			transitionProperty: {
 				'height': 'height',
