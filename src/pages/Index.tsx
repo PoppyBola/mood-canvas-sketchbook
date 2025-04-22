@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Layout from '../components/layout/Layout';
 import MoodSelector from '../components/MoodSelector';
 import Canvas from '../components/Canvas';
+import DailyQuoteCard from '../components/DailyQuoteCard';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useMoodEntry } from '../hooks/useMoodEntry';
@@ -246,7 +247,13 @@ const Index = () => {
   return (
     <Layout gradientClasses={moodEntry?.gradient_classes || ["from-yellow-50", "via-amber-100", "to-yellow-100"]}>
       {stage === 'selector' && (
-        <MoodSelector onSubmit={handleMoodSubmit} onHistoryOpen={handleOpenHistory} />
+        <>
+          <MoodSelector onSubmit={handleMoodSubmit} onHistoryOpen={handleOpenHistory} />
+          {/* Show the daily quote on the mood selector page */}
+          <div className="mt-10">
+            <DailyQuoteCard />
+          </div>
+        </>
       )}
 
       {stage === 'canvas' && moodEntry && imageUrl && (
