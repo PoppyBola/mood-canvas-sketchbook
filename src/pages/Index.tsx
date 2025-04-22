@@ -120,31 +120,35 @@ const Index = () => {
                 created_at: new Date().toISOString()
               }]);
               
-              // Refresh history entries
-              const { data } = await supabase
-                .from('user_mood_history')
-                .select('*')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false })
-                .limit(20);
-                
-              if (data) {
-                const entries: HistoryEntry[] = data.map((item: any) => ({
-                  id: item.id,
-                  user_id: item.user_id,
-                  mood_text: item.mood_text,
-                  mood: item.mood_text,
-                  image_url: item.image_url,
-                  imagePlaceholder: item.image_url,
-                  created_at: item.created_at,
-                  timestamp: new Date(item.created_at).getTime(),
-                  gradient_classes: item.gradient_classes || [],
-                  mood_entry_id: item.mood_entry_id,
-                  personal_note: item.personal_note,
-                  quote: "",
-                  quote_author: ""
-                }));
-                setHistoryEntries(entries);
+              // Fix: Properly handle the Promise with async/await
+              try {
+                const { data } = await supabase
+                  .from('user_mood_history')
+                  .select('*')
+                  .eq('user_id', user.id)
+                  .order('created_at', { ascending: false })
+                  .limit(20);
+                  
+                if (data) {
+                  const entries: HistoryEntry[] = data.map((item: any) => ({
+                    id: item.id,
+                    user_id: item.user_id,
+                    mood_text: item.mood_text,
+                    mood: item.mood_text,
+                    image_url: item.image_url,
+                    imagePlaceholder: item.image_url,
+                    created_at: item.created_at,
+                    timestamp: new Date(item.created_at).getTime(),
+                    gradient_classes: item.gradient_classes || [],
+                    mood_entry_id: item.mood_entry_id,
+                    personal_note: item.personal_note,
+                    quote: "",
+                    quote_author: ""
+                  }));
+                  setHistoryEntries(entries);
+                }
+              } catch (fetchError) {
+                console.error('Error fetching updated history:', fetchError);
               }
             } catch (err) {
               console.error('Error saving to Supabase:', err);
@@ -172,13 +176,16 @@ const Index = () => {
   const handleOpenHistory = () => {
     // Refresh history before opening
     if (user) {
-      supabase
-        .from('user_mood_history')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(20)
-        .then(({ data }) => {
+      // Fix: Properly handle Promise with async/await in an IIFE
+      (async () => {
+        try {
+          const { data } = await supabase
+            .from('user_mood_history')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(20);
+            
           if (data) {
             const entries: HistoryEntry[] = data.map((item: any) => ({
               id: item.id,
@@ -197,11 +204,11 @@ const Index = () => {
             }));
             setHistoryEntries(entries);
           }
-        })
-        .catch(err => {
+        } catch (err) {
           console.error('Error refreshing history:', err);
           setHistoryEntries(getHistory());
-        });
+        }
+      })();
     } else {
       setHistoryEntries(getHistory());
     }
