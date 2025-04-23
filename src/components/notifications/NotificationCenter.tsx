@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Bell, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
-import DailyQuoteModal from '../DailyQuoteModal';
 
 // Define the notification interface to match our database schema
 interface Notification {
@@ -26,7 +26,6 @@ const NotificationCenter: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const isMobile = useIsMobile();
-  const [quoteModalOpen, setQuoteModalOpen] = useState(false);
 
   // Load notifications for the user
   useEffect(() => {
@@ -157,8 +156,6 @@ const NotificationCenter: React.FC = () => {
     }
   };
 
-  const openDailyQuote = () => setQuoteModalOpen(true);
-
   if (!user) return null;
 
   return (
@@ -181,46 +178,44 @@ const NotificationCenter: React.FC = () => {
       {isOpen && (
         <div 
           className={`absolute z-50 ${isMobile ? 'w-[calc(100vw-2rem)] right-0' : 'w-80 right-0'} 
-            top-full mt-2 bg-white/80 glass rounded-lg shadow-lg border border-gray-200 overflow-hidden backdrop-blur-md`}
+            top-full mt-2 bg-white/80 glass rounded-lg shadow-lg border border-gray-200 overflow-hidden backdrop-blur-md 
+            dark:bg-gray-800/90 dark:border-gray-700 animate-fade-in`}
         >
-          <div className="flex items-center justify-between p-3 border-b bg-white/70">
-            <h3 className="font-semibold text-canvas-foreground">Notifications</h3>
+          <div className="flex items-center justify-between p-3 border-b bg-white/70 dark:bg-gray-800/90">
+            <h3 className="font-semibold text-canvas-foreground dark:text-white">Notifications</h3>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={openDailyQuote}>
-                Inspiration
-              </Button>
               {unreadCount > 0 && (
                 <Button variant="ghost" size="sm" onClick={markAllAsRead}>
                   Mark all read
                 </Button>
               )}
               <Button variant="ghost" size="icon" onClick={closeNotifications}>
-                <X className="h-4 w-4 text-canvas-muted" />
+                <X className="h-4 w-4 text-canvas-muted dark:text-gray-400" />
               </Button>
             </div>
           </div>
           
           <ScrollArea className="max-h-[60vh]">
             {notifications.length === 0 ? (
-              <div className="p-4 text-center text-canvas-muted">
+              <div className="p-4 text-center text-canvas-muted dark:text-gray-400">
                 No notifications yet
               </div>
             ) : (
-              <div className="divide-y">
+              <div className="divide-y dark:divide-gray-700">
                 {notifications.map((notification) => (
                   <div 
                     key={notification.id}
-                    className={`p-3 transition-colors ${!notification.is_read ? 'bg-blue-50/50' : ''}`}
+                    className={`p-3 transition-colors ${!notification.is_read ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
                     onClick={() => markAsRead(notification.id)}
                   >
                     <div className="flex justify-between">
-                      <h4 className="font-medium text-canvas-foreground">{notification.title}</h4>
-                      <span className="text-xs text-canvas-muted">
+                      <h4 className="font-medium text-canvas-foreground dark:text-gray-100">{notification.title}</h4>
+                      <span className="text-xs text-canvas-muted dark:text-gray-400">
                         {format(new Date(notification.created_at), 'HH:mm')}
                       </span>
                     </div>
-                    <p className="text-sm mt-1 text-canvas-muted">{notification.message}</p>
-                    <div className="text-xs text-canvas-muted mt-1">
+                    <p className="text-sm mt-1 text-canvas-muted dark:text-gray-300">{notification.message}</p>
+                    <div className="text-xs text-canvas-muted dark:text-gray-400 mt-1">
                       {format(new Date(notification.created_at), 'MMM d, yyyy')}
                     </div>
                   </div>
@@ -229,10 +224,6 @@ const NotificationCenter: React.FC = () => {
             )}
           </ScrollArea>
         </div>
-      )}
-
-      {quoteModalOpen && (
-        <DailyQuoteModal onClose={() => setQuoteModalOpen(false)} />
       )}
     </div>
   );

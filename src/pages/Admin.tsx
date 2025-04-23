@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Settings, ImagePlus, Edit, Trash2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTheme } from '@/components/ThemeProvider';
+import { cn } from '@/lib/utils';
 
 interface MoodEntry {
   id: string;
@@ -29,6 +31,7 @@ const Admin = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false); // In a real app, check admin status from Supabase
   const isMobile = useIsMobile();
+  const { isDarkMode } = useTheme();
 
   // For new mood entry form
   const [newQuote, setNewQuote] = useState('');
@@ -173,39 +176,46 @@ const Admin = () => {
   if (isLoading) {
     return (
       <Layout>
-        <div className="flex justify-center items-center">
-          <div className="w-8 h-8 border-4 border-t-canvas-accent border-canvas-border/30 rounded-full animate-spin"></div>
+        <div className="flex justify-center items-center h-[50vh]">
+          <div className="w-12 h-12 border-4 border-t-canvas-accent border-canvas-border/30 rounded-full animate-spin"></div>
         </div>
       </Layout>
     );
   }
 
   return (
-    <Layout gradientClasses={["from-blue-50", "via-indigo-100", "to-blue-50"]}>
-      <div className="w-full max-w-5xl mx-auto space-y-8 px-4">
+    <Layout gradientClasses={isDarkMode ? ["from-gray-900", "via-gray-850", "to-gray-900"] : ["from-blue-50", "via-indigo-100", "to-blue-50"]}>
+      <div className="w-full mx-auto space-y-8 px-4">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-2">
-            <Settings className="w-5 h-5 text-canvas-accent" />
+            <Settings className={cn("w-5 h-5", isDarkMode ? "text-purple-400" : "text-canvas-accent")} />
             <h1 className="text-xl font-display">Admin Dashboard</h1>
           </div>
           <Button 
             variant="outline" 
             size="sm" 
             onClick={() => navigate('/')}
+            className={cn(isDarkMode ? "bg-gray-800 hover:bg-gray-700 text-white border-gray-700" : "")}
           >
             Return to Canvas
           </Button>
         </div>
 
         <Tabs defaultValue="entries" className="w-full">
-          <TabsList className="grid grid-cols-3 w-full max-w-xl mx-auto">
+          <TabsList className={cn(
+            "grid grid-cols-3 w-full mx-auto mb-6",
+            isDarkMode ? "bg-gray-800" : ""
+          )}>
             <TabsTrigger value="entries">Manage Entries</TabsTrigger>
             <TabsTrigger value="create">Create New</TabsTrigger>
             <TabsTrigger value="import">Import CSV</TabsTrigger>
           </TabsList>
 
           <TabsContent value="entries" className="mt-4">
-            <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-canvas-border p-4 overflow-hidden">
+            <div className={cn(
+              "backdrop-blur-sm rounded-xl border p-4 overflow-hidden",
+              isDarkMode ? "bg-gray-900/50 border-gray-800" : "bg-white/90 border-canvas-border"
+            )}>
               <h2 className="font-medium mb-4">All Mood Entries ({moodEntries.length})</h2>
               
               {isMobile ? (
@@ -214,7 +224,10 @@ const Admin = () => {
                   {moodEntries.map((entry) => (
                     <div 
                       key={entry.id} 
-                      className="bg-white border border-canvas-border/30 rounded-lg p-3 shadow-sm"
+                      className={cn(
+                        "border rounded-lg p-3 shadow-sm",
+                        isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-canvas-border/30"
+                      )}
                     >
                       <div className="flex justify-between items-start">
                         <div className="space-y-1 flex-1">
@@ -232,7 +245,10 @@ const Admin = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
+                            className={cn(
+                              "h-8 w-8",
+                              isDarkMode ? "text-red-400 hover:text-red-300 hover:bg-red-900/30" : "text-red-400 hover:text-red-600 hover:bg-red-50"
+                            )}
                             onClick={() => handleDeleteMoodEntry(entry.id)}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -243,7 +259,10 @@ const Admin = () => {
                         {entry.mood_tags.slice(0, 3).map((tag, i) => (
                           <span
                             key={i}
-                            className="text-xs bg-canvas-border/20 px-2 py-0.5 rounded-full"
+                            className={cn(
+                              "text-xs px-2 py-0.5 rounded-full",
+                              isDarkMode ? "bg-gray-700" : "bg-canvas-border/20"
+                            )}
                           >
                             {tag}
                           </span>
@@ -259,7 +278,9 @@ const Admin = () => {
                 // Desktop view: Table layout
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead className="bg-canvas-border/30">
+                    <thead className={cn(
+                      isDarkMode ? "bg-gray-800/80" : "bg-canvas-border/30"
+                    )}>
                       <tr>
                         <th className="text-left p-2">Quote</th>
                         <th className="text-left p-2">Author</th>
@@ -267,9 +288,14 @@ const Admin = () => {
                         <th className="text-left p-2">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-canvas-border/20">
+                    <tbody className={cn(
+                      "divide-y",
+                      isDarkMode ? "divide-gray-800" : "divide-canvas-border/20"
+                    )}>
                       {moodEntries.map((entry) => (
-                        <tr key={entry.id} className="hover:bg-canvas-border/10">
+                        <tr key={entry.id} className={cn(
+                          isDarkMode ? "hover:bg-gray-800/50" : "hover:bg-canvas-border/10"
+                        )}>
                           <td className="p-2">
                             <div className="max-w-xs truncate">{entry.quote}</div>
                           </td>
@@ -279,7 +305,10 @@ const Admin = () => {
                               {entry.mood_tags.map((tag, i) => (
                                 <span
                                   key={i}
-                                  className="text-xs bg-canvas-border/20 px-2 py-0.5 rounded-full"
+                                  className={cn(
+                                    "text-xs px-2 py-0.5 rounded-full",
+                                    isDarkMode ? "bg-gray-700" : "bg-canvas-border/20"
+                                  )}
                                 >
                                   {tag}
                                 </span>
@@ -298,7 +327,10 @@ const Admin = () => {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
+                                className={cn(
+                                  "h-8 w-8",
+                                  isDarkMode ? "text-red-400 hover:text-red-300 hover:bg-red-900/30" : "text-red-400 hover:text-red-600 hover:bg-red-50"
+                                )}
                                 onClick={() => handleDeleteMoodEntry(entry.id)}
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -321,13 +353,16 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="create" className="mt-4">
-            <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-canvas-border p-6">
+            <div className={cn(
+              "backdrop-blur-sm rounded-xl border p-6",
+              isDarkMode ? "bg-gray-900/50 border-gray-800" : "bg-white/90 border-canvas-border"
+            )}>
               <h2 className="font-medium mb-6 flex items-center gap-2">
-                <ImagePlus className="w-5 h-5 text-canvas-accent" />
+                <ImagePlus className={cn("w-5 h-5", isDarkMode ? "text-purple-400" : "text-canvas-accent")} />
                 Create New Mood Entry
               </h2>
               
-              <form onSubmit={handleCreateMoodEntry} className="space-y-4">
+              <form onSubmit={handleCreateMoodEntry} className="space-y-4 max-w-4xl mx-auto">
                 <div className={`grid grid-cols-1 ${isMobile ? '' : 'md:grid-cols-2'} gap-4`}>
                   <div className="space-y-2">
                     <label htmlFor="quote" className="text-sm font-medium">
@@ -339,7 +374,7 @@ const Admin = () => {
                       value={newQuote}
                       onChange={(e) => setNewQuote(e.target.value)}
                       required
-                      className="bg-white"
+                      className={isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white"}
                       rows={3}
                     />
                   </div>
@@ -355,7 +390,7 @@ const Admin = () => {
                         value={newAuthor}
                         onChange={(e) => setNewAuthor(e.target.value)}
                         required
-                        className="bg-white"
+                        className={isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white"}
                       />
                     </div>
                     
@@ -369,7 +404,7 @@ const Admin = () => {
                         value={newTags}
                         onChange={(e) => setNewTags(e.target.value)}
                         required
-                        className="bg-white"
+                        className={isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white"}
                       />
                     </div>
                   </div>
@@ -386,7 +421,7 @@ const Admin = () => {
                       value={newImagePath}
                       onChange={(e) => setNewImagePath(e.target.value)}
                       required
-                      className="bg-white"
+                      className={isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white"}
                     />
                     <p className="text-xs text-canvas-muted">
                       Either a Supabase storage path or an external URL
@@ -403,7 +438,7 @@ const Admin = () => {
                       value={newGradientClasses}
                       onChange={(e) => setNewGradientClasses(e.target.value)}
                       required
-                      className="bg-white"
+                      className={isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white"}
                     />
                   </div>
                 </div>
@@ -417,7 +452,7 @@ const Admin = () => {
                     placeholder="Additional description or context for this mood"
                     value={newDescription}
                     onChange={(e) => setNewDescription(e.target.value)}
-                    className="bg-white"
+                    className={isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white"}
                     rows={2}
                   />
                 </div>
@@ -425,7 +460,10 @@ const Admin = () => {
                 <div className="pt-4">
                   <Button 
                     type="submit"
-                    className={isMobile ? "w-full" : "w-auto"}
+                    className={cn(
+                      isMobile ? "w-full" : "w-auto",
+                      isDarkMode ? "bg-purple-600 hover:bg-purple-700" : ""
+                    )}
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? 'Creating...' : 'Create Mood Entry'}
@@ -436,17 +474,26 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="import" className="mt-4">
-            <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-canvas-border p-6 max-w-2xl mx-auto">
+            <div className={cn(
+              "backdrop-blur-sm rounded-xl border p-6 max-w-2xl mx-auto",
+              isDarkMode ? "bg-gray-900/50 border-gray-800" : "bg-white/90 border-canvas-border"
+            )}>
               <h2 className="font-medium mb-6 flex items-center gap-2">
-                <span className="inline-block bg-canvas-accent/20 p-2 rounded-full mr-1">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect width="20" height="20" rx="6" fill="#F7D8A8"/><path d="M5.7 10a.7.7 0 0 0 0 1.4h4.2v2.68L7.58 12.28a.7.7 0 1 0-.98 1l3.43 3.35a.7.7 0 0 0 .97-.02l3.3-3.32a.7.7 0 1 0-1-.98l-2.14 2.09V11.4h4.2a.7.7 0 0 0 0-1.4H5.7Z" fill="#D27C2C"/></svg>
+                <span className={cn(
+                  "inline-block p-2 rounded-full mr-1",
+                  isDarkMode ? "bg-amber-600/30" : "bg-canvas-accent/20"
+                )}>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect width="20" height="20" rx="6" fill={isDarkMode ? "#8B5CF6" : "#F7D8A8"}/><path d="M5.7 10a.7.7 0 0 0 0 1.4h4.2v2.68L7.58 12.28a.7.7 0 1 0-.98 1l3.43 3.35a.7.7 0 0 0 .97-.02l3.3-3.32a.7.7 0 1 0-1-.98l-2.14 2.09V11.4h4.2a.7.7 0 0 0 0-1.4H5.7Z" fill={isDarkMode ? "#F3F4F6" : "#D27C2C"}/></svg>
                 </span>
                 Bulk Import Quotes/Images via CSV
               </h2>
-              <p className="mb-4 text-canvas-muted text-sm">
-                Import a CSV with columns: <code>quote,quote_author,image_path,mood_tags,gradient_classes,description</code>.<br/>
+              <p className={cn(
+                "mb-4 text-sm",
+                isDarkMode ? "text-gray-300" : "text-canvas-muted"
+              )}>
+                Import a CSV with columns: <code className={isDarkMode ? "text-purple-300" : ""}>quote,quote_author,image_path,mood_tags,gradient_classes,description</code>.<br/>
                 Each row creates a <b>mood entry</b>. Empty values are allowed for optional columns.<br/>
-                <span className="text-yellow-800 block mt-2">⚠️ Only admins can use this tool. All entries are instantly added if valid.</span>
+                <span className={isDarkMode ? "text-amber-300 block mt-2" : "text-yellow-800 block mt-2"}>⚠️ Only admins can use this tool. All entries are instantly added if valid.</span>
               </p>
               {/* CSV Upload Form */}
               <form
@@ -494,15 +541,30 @@ const Admin = () => {
                 className="space-y-4"
               >
                 <input
-                  className="block w-full border p-2 rounded text-base"
+                  className={cn(
+                    "block w-full border p-2 rounded text-base file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium",
+                    isDarkMode 
+                      ? "bg-gray-800 border-gray-700 text-white file:bg-gray-900 file:text-gray-100" 
+                      : "border-gray-300 file:bg-gray-100 file:text-gray-700"
+                  )}
                   type="file"
                   accept=".csv,text/csv"
                   onChange={e => setCsvFile(e.target.files?.[0] || null)}
                 />
                 {importLoading ? (
-                  <div className="text-canvas-accent">Importing...</div>
+                  <div className={cn("flex items-center", isDarkMode ? "text-purple-400" : "text-canvas-accent")}>
+                    <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></div>
+                    <span>Importing...</span>
+                  </div>
                 ) : (
-                  <Button type="submit" disabled={importLoading} className={isMobile ? "w-full" : "w-auto"}>
+                  <Button 
+                    type="submit" 
+                    disabled={importLoading} 
+                    className={cn(
+                      isMobile ? "w-full" : "w-auto",
+                      isDarkMode ? "bg-purple-600 hover:bg-purple-700" : ""
+                    )}
+                  >
                     Import CSV
                   </Button>
                 )}
@@ -510,7 +572,10 @@ const Admin = () => {
                   <div className="text-red-500 text-sm">{importError}</div>
                 )}
                 {importResult && (
-                  <div className="text-green-700 text-sm whitespace-pre-wrap">
+                  <div className={cn(
+                    "text-sm whitespace-pre-wrap",
+                    isDarkMode ? "text-green-400" : "text-green-700"
+                  )}>
                     {importResult.message || 'Import complete.'}
                   </div>
                 )}
@@ -520,7 +585,9 @@ const Admin = () => {
               <h3 className="mt-8 mb-3 font-medium text-base">Recent Imports</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
-                  <thead className="bg-canvas-border/30">
+                  <thead className={cn(
+                    isDarkMode ? "bg-gray-800" : "bg-canvas-border/30"
+                  )}>
                     <tr>
                       <th className="p-2 text-left">When</th>
                       <th className="p-2 text-left">File</th>
@@ -530,7 +597,7 @@ const Admin = () => {
                   </thead>
                   <tbody>
                   {importLogs.length === 0 ? (
-                    <tr><td colSpan={4} className="p-4 text-center text-canvas-muted">No imports yet.</td></tr>
+                    <tr><td colSpan={4} className="p-4 text-center text-canvas-muted dark:text-gray-400">No imports yet.</td></tr>
                   ) : (
                     importLogs.map(log => (
                       <tr key={log.id}>
