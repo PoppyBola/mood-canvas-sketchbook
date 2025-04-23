@@ -1,10 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Layout from '../components/layout/Layout';
 import MoodSelector from '../components/MoodSelector';
 import Canvas from '../components/Canvas';
-import DailyQuoteCard from '../components/DailyQuoteCard';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useMoodEntry } from '../hooks/useMoodEntry';
@@ -13,6 +13,8 @@ import type { HistoryEntry } from '../utils/historyUtils';
 import HistoryView from '../components/history/HistoryView';
 import { supabase } from '@/integrations/supabase/client';
 import DailyQuoteModal from '@/components/DailyQuoteModal';
+import MobileActionBar from '@/components/layout/MobileActionBar';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Index = () => {
   const [moodSearch, setMoodSearch] = useState('');
@@ -21,9 +23,13 @@ const Index = () => {
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
 
   // Get mood data and image url
   const { moodEntry, imageUrl, isLoading, error } = useMoodEntry(moodSearch);
+
+  // Add local state for quote modal
+  const [showQuote, setShowQuote] = useState(false);
 
   // Load history entries on component mount
   useEffect(() => {
@@ -221,9 +227,6 @@ const Index = () => {
     setShowHistory(false);
   };
 
-  // Add local state for quote modal
-  const [showQuote, setShowQuote] = useState(false);
-
   if (isLoading || (stage === 'loading' && (!moodEntry || !imageUrl))) {
     return (
       <Layout gradientClasses={["from-yellow-50", "via-amber-100", "to-yellow-100"]}>
@@ -248,19 +251,44 @@ const Index = () => {
   }
 
   return (
-    <Layout gradientClasses={moodEntry?.gradient_classes || ["from-yellow-50", "via-amber-100", "to-yellow-100"]}>
+    <Layout 
+      gradientClasses={moodEntry?.gradient_classes || ["from-yellow-50", "via-amber-100", "to-yellow-100"]}
+      showFooter={!isMobile || stage !== 'selector'}
+    >
       {stage === 'selector' && (
         <>
           <MoodSelector onSubmit={handleMoodSubmit} onHistoryOpen={handleOpenHistory} />
-          <div className="mt-6 flex justify-center">
-            <Button 
-              variant="ghost"
-              className="rounded-xl px-4 py-2 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-canvas-muted shadow-warm transition"
-              onClick={() => setShowQuote(true)}
-            >
-              ✨ Inspiration
-            </Button>
-          </div>
+          
+          {!isMobile && (
+            <div className="mt-6 flex justify-center">
+              <Button 
+                variant="ghost"
+                className="rounded-xl px-4 py-2 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-canvas-muted shadow-warm transition"
+                onClick={() => setShowQuote(true)}
+              >
+                ✨ Inspiration
+              </Button>
+            </div>
+          )}
+
+          {/* Mobile Action Bar */}
+          <MobileActionBar 
+            onInspiration={() => setShowQuote(true)}
+            onCreateCanvas={() => {
+              // If the user hasn't entered a mood yet, show a placeholder
+              if (!moodSearch) {
+                toast("Enter a mood above to create your canvas", {
+                  description: "Try 'peaceful' or 'excited' to get started",
+                  action: {
+                    label: "Got it",
+                    onClick: () => {}
+                  }
+                });
+              }
+            }}
+            showButtons={true}
+          />
+          
           {showQuote && (
             <DailyQuoteModal onClose={() => setShowQuote(false)} />
           )}
@@ -268,11 +296,20 @@ const Index = () => {
       )}
 
       {stage === 'canvas' && moodEntry && imageUrl && (
-        <Canvas
-          moodEntry={moodEntry}
-          imageUrl={imageUrl}
-          onBack={handleBackToSelector}
-        />
+        <>
+          <Canvas
+            moodEntry={moodEntry}
+            imageUrl={imageUrl}
+            onBack={handleBackToSelector}
+          />
+          {isMobile && (
+            <MobileActionBar 
+              onInspiration={() => setShowQuote(true)}
+              onCreateCanvas={handleBackToSelector}
+              showButtons={true}
+            />
+          )}
+        </>
       )}
 
       {showHistory && (

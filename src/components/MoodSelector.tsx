@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Clock } from 'lucide-react';
+import { Clock, Sparkles } from 'lucide-react';
 
 interface MoodSelectorProps {
   onSubmit: (mood: string) => void;
@@ -11,6 +11,12 @@ interface MoodSelectorProps {
 const MoodSelector: React.FC<MoodSelectorProps> = ({ onSubmit, onHistoryOpen }) => {
   const [mood, setMood] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Suggested moods for quick selection
+  const suggestedMoods = [
+    'peaceful', 'excited', 'grateful', 'creative', 
+    'reflective', 'energetic', 'calm', 'hopeful'
+  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +30,14 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({ onSubmit, onHistoryOpen }) 
         setIsSubmitting(false);
       }, 300);
     }
+  };
+
+  const handleSuggestedMood = (suggestedMood: string) => {
+    setMood(suggestedMood);
+    // Submit with a slight delay to show the selected mood
+    setTimeout(() => {
+      onSubmit(suggestedMood);
+    }, 100);
   };
 
   return (
@@ -51,6 +65,22 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({ onSubmit, onHistoryOpen }) 
           {isSubmitting ? 'Creating...' : 'Create My Canvas'}
         </Button>
       </form>
+
+      {/* Mood suggestions */}
+      <div className="pt-2">
+        <p className="text-sm text-canvas-muted mb-3">Or try one of these:</p>
+        <div className="flex flex-wrap justify-center gap-2">
+          {suggestedMoods.map(suggestedMood => (
+            <button
+              key={suggestedMood}
+              onClick={() => handleSuggestedMood(suggestedMood)}
+              className="px-3 py-1.5 bg-white/60 hover:bg-white/90 rounded-full text-xs border border-canvas-border/40 text-canvas-foreground transition-all hover:scale-105 active:scale-95"
+            >
+              {suggestedMood}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="pt-2">
         <button

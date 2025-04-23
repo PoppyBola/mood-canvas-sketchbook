@@ -27,7 +27,7 @@ const ArtDisplay: React.FC<ArtDisplayProps> = ({
         </h2>
       </div>
 
-      <div className="rounded-2.5xl overflow-hidden shadow-warm-lg transition-shadow duration-[1500ms] ease-in-out hover:shadow-warm border border-canvas-border bg-white relative">
+      <div className="rounded-2.5xl overflow-hidden shadow-warm-lg transition-shadow duration-[1500ms] ease-in-out hover:shadow-warm-lg border border-canvas-border bg-white relative">
         <div className="relative aspect-[4/5]">
           {/* Image */}
           <img
@@ -39,10 +39,10 @@ const ArtDisplay: React.FC<ArtDisplayProps> = ({
           />
 
           {/* Quote overlay with elegant scrim and smooth scale on hover */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent flex flex-col justify-end p-6 transition-transform duration-700 hover:scale-[1.04]">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-6 transition-transform duration-700 hover:scale-[1.02]">
             <div className="text-center space-y-3">
               <p className="font-display text-xl md:text-2xl text-white leading-relaxed tracking-wide drop-shadow-lg">
-                {artData.quote}
+                "{artData.quote}"
               </p>
               <p className="text-sm md:text-base text-white/90 font-sans mt-2 drop-shadow">
                 — {artData.quoteAuthor}
