@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -13,6 +12,7 @@ import { addHistoryEntry, getHistory } from '../utils/historyUtils';
 import type { HistoryEntry } from '../utils/historyUtils';
 import HistoryView from '../components/history/HistoryView';
 import { supabase } from '@/integrations/supabase/client';
+import DailyQuoteModal from '@/components/DailyQuoteModal';
 
 const Index = () => {
   const [moodSearch, setMoodSearch] = useState('');
@@ -221,6 +221,9 @@ const Index = () => {
     setShowHistory(false);
   };
 
+  // Add local state for quote modal
+  const [showQuote, setShowQuote] = useState(false);
+
   if (isLoading || (stage === 'loading' && (!moodEntry || !imageUrl))) {
     return (
       <Layout gradientClasses={["from-yellow-50", "via-amber-100", "to-yellow-100"]}>
@@ -249,10 +252,18 @@ const Index = () => {
       {stage === 'selector' && (
         <>
           <MoodSelector onSubmit={handleMoodSubmit} onHistoryOpen={handleOpenHistory} />
-          {/* Show the daily quote on the mood selector page */}
-          <div className="mt-10">
-            <DailyQuoteCard />
+          <div className="mt-6 flex justify-center">
+            <Button 
+              variant="ghost"
+              className="rounded-xl px-4 py-2 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-canvas-muted shadow-warm transition"
+              onClick={() => setShowQuote(true)}
+            >
+              ✨ Inspiration
+            </Button>
           </div>
+          {showQuote && (
+            <DailyQuoteModal onClose={() => setShowQuote(false)} />
+          )}
         </>
       )}
 

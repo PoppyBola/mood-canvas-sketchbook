@@ -20,14 +20,15 @@ const Layout: React.FC<LayoutProps> = ({
 
   return (
     <div
-      className={`flex flex-col min-h-full transition-colors duration-[1500ms] ease-in-out ${gradientClassNames} font-sans`}
+      className={`flex flex-col min-h-screen h-screen transition-colors duration-[1500ms] ease-in-out ${gradientClassNames} font-sans`}
       onClick={onHeaderClick}
       role={onHeaderClick ? "button" : undefined}
       tabIndex={onHeaderClick ? 0 : undefined}
       onKeyDown={(e) => { if (onHeaderClick && (e.key === 'Enter' || e.key === ' ')) onHeaderClick(); }}
+      style={{ WebkitOverflowScrolling: "touch"}}
     >
       <Header />
-      <main className="flex-1 flex flex-col items-center justify-center px-6 py-8 w-full max-w-md mx-auto select-text">
+      <main className="flex-1 flex flex-col items-center justify-center px-6 py-8 w-full max-w-md mx-auto select-text transition-all">
         {children}
       </main>
       <Footer />
