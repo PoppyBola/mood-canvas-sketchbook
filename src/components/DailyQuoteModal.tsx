@@ -2,10 +2,10 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, CircleDot, Share2 } from 'lucide-react';
+import { X, CircleDot, Share2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
-import { useMoodEntries } from "@/hooks/useMoodEntries";
+import { useMoodEntries, MoodEntry } from "@/hooks/useMoodEntries";
 
 interface DailyQuoteModalProps {
   onClose: () => void;
@@ -13,13 +13,10 @@ interface DailyQuoteModalProps {
 
 const DailyQuoteModal: React.FC<DailyQuoteModalProps> = ({ onClose }) => {
   const { getDailyInspiration, loading } = useMoodEntries();
-  const [quote, setQuote] = useState<any>(null);
+  const [quote, setQuote] = useState<MoodEntry | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchDailyQuote();
-  }, []);
-
+  const [isClosing, setIsClosing] = useState(false);
+  
   const fetchDailyQuote = async () => {
     try {
       const dailyQuote = getDailyInspiration();
@@ -28,23 +25,27 @@ const DailyQuoteModal: React.FC<DailyQuoteModalProps> = ({ onClose }) => {
         setQuote(dailyQuote);
         
         // Get public URL for image if it's a storage path
-        if (dailyQuote.image_path && dailyQuote.image_path.startsWith('mood-images/')) {
+        if (dailyQuote.image_path) {
           try {
-            const { data } = supabase.storage
-              .from('mood-images')
-              .getPublicUrl(dailyQuote.image_path.replace('mood-images/', ''));
+            if (dailyQuote.image_path.startsWith('http')) {
+              setImageUrl(dailyQuote.image_path);
+            } else {
+              // Handle Supabase storage paths
+              let storagePath = dailyQuote.image_path.replace(/^mood-images\//, '');
               
-            if (data) {
-              setImageUrl(data.publicUrl);
+              const { data } = supabase.storage
+                .from('mood-images')
+                .getPublicUrl(storagePath);
+                
+              if (data) {
+                setImageUrl(data.publicUrl);
+              }
             }
           } catch (err) {
             console.error("Error getting image URL:", err);
             // Fallback to the image path directly
             setImageUrl(dailyQuote.image_path);
           }
-        } else {
-          // Use the image path directly
-          setImageUrl(dailyQuote.image_path);
         }
       }
     } catch (err) {
@@ -52,6 +53,10 @@ const DailyQuoteModal: React.FC<DailyQuoteModalProps> = ({ onClose }) => {
       console.error("Error fetching daily quote:", err);
     }
   };
+
+  useEffect(() => {
+    fetchDailyQuote();
+  }, []);
 
   const handleShare = async () => {
     if (!quote) return;
@@ -71,10 +76,22 @@ const DailyQuoteModal: React.FC<DailyQuoteModalProps> = ({ onClose }) => {
     }
   };
 
+  const handleClose = () => {
+    // Prevent immediate closure, add animation first
+    setIsClosing(true);
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  };
+
+  const handleRefresh = () => {
+    fetchDailyQuote();
+  };
+
   if (loading) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm animate-fade-in">
-        <div className="bg-white/90 rounded-2.5xl shadow-warm-lg p-10 flex flex-col items-center gap-4 min-w-[320px] max-w-[90vw]">
+        <div className="bg-white/90 dark:bg-canvas-background/90 rounded-2.5xl shadow-warm-lg p-10 flex flex-col items-center gap-4 min-w-[320px] max-w-[90vw]">
           <div className="w-8 h-8 border-4 border-t-canvas-accent border-canvas-border/30 rounded-full animate-spin" />
           <div className="text-canvas-muted">Loading inspiration...</div>
         </div>
@@ -85,12 +102,25 @@ const DailyQuoteModal: React.FC<DailyQuoteModalProps> = ({ onClose }) => {
   if (!quote) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm animate-fade-in transition">
-      <div className="relative bg-white/95 dark:bg-canvas-background/95 rounded-2.5xl shadow-warm-lg border border-canvas-border/60 max-w-md w-[90vw] flex flex-col px-0 pb-0 overflow-hidden animate-scale-in">
+    <div 
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm transition-opacity duration-300 ${
+        isClosing ? 'opacity-0' : 'opacity-100 animate-fade-in'
+      }`}
+      onClick={(e) => {
+        // Close only if clicking the backdrop, not the modal itself
+        if (e.target === e.currentTarget) handleClose();
+      }}
+    >
+      <div 
+        className={`relative bg-white/95 dark:bg-canvas-background/95 rounded-2.5xl shadow-warm-lg border border-canvas-border/60 max-w-md w-[90vw] flex flex-col px-0 pb-0 overflow-hidden transition-transform duration-300 ${
+          isClosing ? 'scale-95 opacity-0' : 'scale-100 animate-scale-in'
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <Button 
           variant="ghost"
           size="icon"
-          onClick={onClose}
+          onClick={handleClose}
           aria-label="Close"
           className="absolute right-2 top-2 text-canvas-muted hover:text-canvas-accent bg-transparent z-10"
         >
@@ -120,13 +150,23 @@ const DailyQuoteModal: React.FC<DailyQuoteModalProps> = ({ onClose }) => {
           </div>
         </div>
         
-        <CardContent className="pt-4 pb-6 flex items-center justify-center">
+        <CardContent className="pt-4 pb-6 flex items-center justify-between">
+          <Button
+            onClick={handleRefresh}
+            variant="outline"
+            className="rounded-full"
+            size="sm"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            New Quote
+          </Button>
+          
           <Button 
             onClick={handleShare}
             className="rounded-full px-5 py-2 bg-canvas-accent/90 text-white shadow-warm hover:bg-canvas-accent"
           >
             <Share2 className="w-4 h-4 mr-2" />
-            Share This Quote
+            Share
           </Button>
         </CardContent>
       </div>

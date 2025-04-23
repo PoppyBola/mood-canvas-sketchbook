@@ -4,16 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import Fuse from 'fuse.js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-interface MoodEntry {
-  id: string;
-  quote: string;
-  quote_author: string;
-  image_path: string;
-  mood_tags: string[];
-  gradient_classes: string[];
-  description?: string;
-}
+import { MoodEntry } from './useMoodEntries';
 
 export const useMoodEntry = (searchTerm: string) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -128,10 +119,10 @@ export const useMoodEntry = (searchTerm: string) => {
           }
           
           // Handle Supabase storage paths
-          let storagePath = moodEntry.image_path.replace(/^public\//, '');
+          let storagePath = moodEntry.image_path.replace(/^mood-images\//, '');
           
           const { data } = supabase.storage
-            .from('mood_images')
+            .from('mood-images')
             .getPublicUrl(storagePath);
           
           if (data?.publicUrl) {
