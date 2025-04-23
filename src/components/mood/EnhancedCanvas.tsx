@@ -1,11 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
 import Canvas from '../Canvas';
 import { useQuoteRandomizer } from '@/hooks/useQuoteRandomizer';
 import { MoodEntry } from '@/hooks/useMoodEntries';
-import { RefreshCw } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface EnhancedCanvasProps {
   moodEntry: MoodEntry;
@@ -33,16 +30,16 @@ const EnhancedCanvas: React.FC<EnhancedCanvasProps> = ({
     }
   }, [initialMoodEntry]);
   
-  const handleRandomize = async () => {
-    if (isLoading) return;
-    
-    const newQuote = await randomizeQuote();
-    if (newQuote && newQuote !== currentMoodEntry) {
-      toast.success("Found a related quote!");
-    } else {
-      toast.info("No more related quotes found");
+  // Auto-rotate through related quotes every 30 seconds
+  useEffect(() => {
+    if (!isLoading) {
+      const quoteInterval = setInterval(() => {
+        randomizeQuote();
+      }, 30000); // 30 seconds
+      
+      return () => clearInterval(quoteInterval);
     }
-  };
+  }, [isLoading]);
   
   if (!currentMoodEntry) return null;
   
@@ -53,19 +50,6 @@ const EnhancedCanvas: React.FC<EnhancedCanvasProps> = ({
         imageUrl={imageUrl}
         onBack={onBack}
       />
-      
-      <div className="absolute bottom-4 right-4 z-10">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRandomize}
-          disabled={isLoading}
-          className="bg-white/70 hover:bg-white/90 backdrop-blur-sm rounded-full shadow-warm"
-        >
-          <RefreshCw className="w-4 h-4 mr-2" /> 
-          {isLoading ? 'Finding...' : 'Similar Quote'}
-        </Button>
-      </div>
     </div>
   );
 };

@@ -23,6 +23,19 @@ const MobileActionBar: React.FC<MobileActionBarProps> = ({
   
   if (!isMobile) return null;
 
+  // Handler functions to ensure events properly fire
+  const handleInspirationClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onInspiration) onInspiration();
+  };
+  
+  const handleCreateCanvasClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onCreateCanvas) onCreateCanvas();
+  };
+
   return (
     <motion.div 
       className={cn(
@@ -43,7 +56,7 @@ const MobileActionBar: React.FC<MobileActionBarProps> = ({
               whileTap={{ scale: 0.97 }}
             >
               <Button
-                onClick={onCreateCanvas}
+                onClick={handleCreateCanvasClick}
                 className="w-full py-6 rounded-2xl bg-gradient-to-br from-canvas-accent to-canvas-accent/90 hover:from-canvas-accent/90 hover:to-canvas-accent/80 text-white shadow-warm transition-all duration-300"
               >
                 <span className="flex items-center">
@@ -58,7 +71,7 @@ const MobileActionBar: React.FC<MobileActionBarProps> = ({
               whileTap={{ scale: 0.97 }}
             >
               <Button
-                onClick={onInspiration}
+                onClick={handleInspirationClick}
                 variant="outline" 
                 className={cn(
                   "w-full py-6 rounded-2xl border-2 transition-all duration-300",

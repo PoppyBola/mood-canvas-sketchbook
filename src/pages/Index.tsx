@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Layout from '../components/layout/Layout';
 import MoodSelector from '../components/MoodSelector';
-import { Button } from '@/components/ui/button'; // Added this import
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useMoodEntry } from '../hooks/useMoodEntry';
 import { addHistoryEntry, getHistory } from '../utils/historyUtils';
@@ -106,7 +106,6 @@ const Index = () => {
     }
   }, [stage, moodEntry, imageUrl, moodSearch, user]);
   
-  // Extract history saving to a separate function
   const saveToHistory = async () => {
     if (!moodEntry || !imageUrl) return;
     

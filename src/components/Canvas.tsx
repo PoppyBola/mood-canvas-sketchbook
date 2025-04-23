@@ -50,10 +50,9 @@ const Canvas: React.FC<CanvasProps> = ({ moodEntry, imageUrl, onBack }) => {
   return (
     <div className="w-full max-w-md space-y-4 animate-fade-up">
       <div className="text-center mb-4">
-        <h2 className="text-2xl font-medium text-canvas-foreground dark:text-white">
-          Canvas for <span className="italic">{moodEntry.mood_tags?.[0] || 'your mood'}</span>
+        <h2 className="text-xl font-medium text-canvas-foreground dark:text-white">
+          Your Mood Canvas
         </h2>
-        <p className="text-sm text-canvas-muted dark:text-gray-400 mt-1">A visual representation of your feelings</p>
       </div>
       
       <div className="relative">
