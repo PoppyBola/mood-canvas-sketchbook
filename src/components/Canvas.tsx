@@ -71,9 +71,9 @@ const Canvas: React.FC<CanvasProps> = ({ moodEntry, imageUrl, onBack }) => {
   return (
     <div className="w-full max-w-md mx-auto space-y-4 animate-fade-up">
       {/* "Canvas for [mood]" positioned ABOVE image container */}
-      <div className="text-center mb-3">
+      <div className="text-center mb-2">
         <h2 className="text-xl font-medium text-canvas-foreground dark:text-white">
-          Canvas for <span className="capitalize">{moodLabel}</span>
+          Canvas for <span className="capitalize font-semibold">{moodLabel}</span>
         </h2>
       </div>
       
@@ -103,12 +103,12 @@ const Canvas: React.FC<CanvasProps> = ({ moodEntry, imageUrl, onBack }) => {
               onLoad={handleImageLoad}
             />
             
-            {/* Quote overlay with scrim for better readability */}
+            {/* Enhanced quote overlay with better readability scrim */}
             <div 
               className={cn(
                 "absolute inset-0 flex flex-col items-center justify-center p-6",
-                "bg-gradient-to-t from-black/70 via-black/40 to-black/20",
-                "backdrop-blur-[1px] transition-opacity duration-1000",
+                "bg-gradient-to-t from-black/80 via-black/50 to-black/30",
+                "backdrop-blur-[1.5px] transition-opacity duration-1000",
                 isImageLoaded ? "opacity-100" : "opacity-0"
               )}
             >
@@ -121,7 +121,7 @@ const Canvas: React.FC<CanvasProps> = ({ moodEntry, imageUrl, onBack }) => {
                 >
                   "{moodEntry.quote}"
                 </blockquote>
-                <cite className="block text-sm md:text-base text-white/90 font-sans mt-2 italic">
+                <cite className="block text-base text-white/90 font-sans mt-2 italic font-medium">
                   — {moodEntry.quote_author}
                 </cite>
               </div>
@@ -136,7 +136,7 @@ const Canvas: React.FC<CanvasProps> = ({ moodEntry, imageUrl, onBack }) => {
           size="sm"
           onClick={onBack}
           className={cn(
-            "flex items-center gap-1",
+            "flex items-center gap-1 transition-all duration-300",
             isDarkMode ? "hover:bg-gray-800" : "hover:bg-white/20"
           )}
         >
@@ -149,7 +149,7 @@ const Canvas: React.FC<CanvasProps> = ({ moodEntry, imageUrl, onBack }) => {
           size="sm"
           onClick={handleShare}
           className={cn(
-            "flex items-center gap-1",
+            "flex items-center gap-1 transition-all duration-300",
             isDarkMode ? "bg-gray-800/80 hover:bg-gray-700" : "bg-white/80 hover:bg-white"
           )}
         >

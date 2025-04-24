@@ -47,7 +47,7 @@ const MobileActionBar: React.FC<MobileActionBarProps> = ({
               e.stopPropagation();
               onCreateCanvas();
             }}
-            className="w-full py-6 rounded-2xl bg-gradient-to-br from-canvas-accent to-canvas-accent/90 hover:from-canvas-accent/90 hover:to-canvas-accent/80 text-white shadow-warm transition-all duration-300"
+            className="w-full py-6 rounded-2xl bg-gradient-to-br from-canvas-accent to-canvas-accent/90 hover:from-canvas-accent/90 hover:to-canvas-accent/80 text-white shadow-warm transition-all duration-500"
           >
             <span className="flex items-center">
               <PenLine className="mr-2 h-5 w-5" />
@@ -68,7 +68,7 @@ const MobileActionBar: React.FC<MobileActionBarProps> = ({
             }}
             variant="outline" 
             className={cn(
-              "w-full py-6 rounded-2xl border-2 transition-all duration-300",
+              "w-full py-6 rounded-2xl border-2 transition-all duration-500",
               isDarkMode 
                 ? "border-gray-700 bg-gray-800 hover:bg-gray-700 text-white" 
                 : "border-canvas-border bg-white hover:bg-canvas-border/10"

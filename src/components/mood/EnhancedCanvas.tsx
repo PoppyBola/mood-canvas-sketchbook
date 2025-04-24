@@ -45,48 +45,52 @@ const EnhancedCanvas: React.FC<EnhancedCanvasProps> = ({
   // Fetch public URL for the image if it's a Supabase storage path
   useEffect(() => {
     const getPublicImageUrl = async () => {
-      if (currentMoodEntry?.image_path) {
-        try {
-          // Skip if it's already a full URL
-          if (currentMoodEntry.image_path.startsWith('http')) {
-            setImageUrl(currentMoodEntry.image_path);
-            return;
-          }
+      if (!currentMoodEntry?.image_path) return;
+      
+      try {
+        // Skip if it's already a full URL
+        if (currentMoodEntry.image_path.startsWith('http')) {
+          setImageUrl(currentMoodEntry.image_path);
+          return;
+        }
+        
+        // Process storage path for Supabase
+        let storagePath = currentMoodEntry.image_path;
+        
+        // Remove bucket prefix if present
+        if (storagePath.startsWith('mood-images/')) {
+          storagePath = storagePath.replace(/^mood-images\//, '');
+        }
+        
+        const { data, error } = supabase.storage
+          .from('mood-images')
+          .getPublicUrl(storagePath);
           
-          // Process storage path for Supabase
-          let storagePath = currentMoodEntry.image_path;
+        if (error) {
+          throw error;
+        }
           
-          // Remove bucket prefix if present
-          if (storagePath.startsWith('mood-images/')) {
-            storagePath = storagePath.replace(/^mood-images\//, '');
-          }
-          
-          const { data } = supabase.storage
-            .from('mood-images')
-            .getPublicUrl(storagePath);
-            
-          if (data?.publicUrl) {
-            setImageUrl(data.publicUrl);
-          }
-        } catch (err) {
-          console.error("Error getting public image URL:", err);
-          // Avoid showing too many toasts
-          if (currentMoodEntry.id !== initialMoodEntry.id) {
-            toast.error("Could not load image from storage");
-          }
+        if (data?.publicUrl) {
+          setImageUrl(data.publicUrl);
+        }
+      } catch (err) {
+        console.error("Error getting public image URL:", err);
+        // Avoid showing too many toasts
+        if (currentMoodEntry.id !== initialMoodEntry.id) {
+          toast.error("Could not load image from storage");
         }
       }
     };
     
     getPublicImageUrl();
-  }, [currentMoodEntry?.image_path]);
+  }, [currentMoodEntry?.image_path, initialMoodEntry.id]);
   
-  // Auto-rotate through related quotes every 30 seconds
+  // Auto-rotate through related quotes every 45 seconds (increased from 30 for better experience)
   useEffect(() => {
     if (!isLoading) {
       const quoteInterval = setInterval(() => {
         randomizeQuote();
-      }, 30000); // 30 seconds
+      }, 45000); // 45 seconds
       
       return () => clearInterval(quoteInterval);
     }
