@@ -40,7 +40,7 @@ const EnhancedCanvas: React.FC<EnhancedCanvasProps> = ({
       
       loadRelatedQuotes();
     }
-  }, [initialMoodEntry]); // Intentionally remove findRelatedQuotes to prevent dependency cycle
+  }, [initialMoodEntry?.id]); // Only re-run when mood entry ID changes
   
   // Fetch public URL for the image if it's a Supabase storage path
   useEffect(() => {
@@ -70,13 +70,16 @@ const EnhancedCanvas: React.FC<EnhancedCanvasProps> = ({
           }
         } catch (err) {
           console.error("Error getting public image URL:", err);
-          toast.error("Could not load image from storage");
+          // Avoid showing too many toasts
+          if (currentMoodEntry.id !== initialMoodEntry.id) {
+            toast.error("Could not load image from storage");
+          }
         }
       }
     };
     
     getPublicImageUrl();
-  }, [currentMoodEntry]);
+  }, [currentMoodEntry?.image_path]);
   
   // Auto-rotate through related quotes every 30 seconds
   useEffect(() => {

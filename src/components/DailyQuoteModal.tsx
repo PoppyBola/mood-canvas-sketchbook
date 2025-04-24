@@ -16,6 +16,7 @@ const DailyQuoteModal: React.FC<DailyQuoteModalProps> = ({ onClose }) => {
   const [quote, setQuote] = useState<MoodEntry | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   
   const fetchDailyQuote = async () => {
     try {
@@ -55,6 +56,7 @@ const DailyQuoteModal: React.FC<DailyQuoteModalProps> = ({ onClose }) => {
   };
 
   useEffect(() => {
+    // Make sure we fetch data before trying to render
     fetchDailyQuote();
   }, []);
 
@@ -85,10 +87,11 @@ const DailyQuoteModal: React.FC<DailyQuoteModalProps> = ({ onClose }) => {
   };
 
   const handleRefresh = () => {
+    setImageLoaded(false);
     fetchDailyQuote();
   };
 
-  if (loading) {
+  if (loading && !quote) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm animate-fade-in">
         <div className="bg-white/90 dark:bg-canvas-background/90 rounded-2.5xl shadow-warm-lg p-10 flex flex-col items-center gap-4 min-w-[320px] max-w-[90vw]">
@@ -99,7 +102,17 @@ const DailyQuoteModal: React.FC<DailyQuoteModalProps> = ({ onClose }) => {
     );
   }
 
-  if (!quote) return null;
+  if (!quote) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm animate-fade-in">
+        <div className="bg-white/90 dark:bg-canvas-background/90 rounded-2.5xl shadow-warm-lg p-10 flex flex-col items-center gap-4 min-w-[320px] max-w-[90vw]">
+          <div className="text-canvas-muted">No inspiration available right now.</div>
+          <Button onClick={handleRefresh}>Try Again</Button>
+          <Button variant="ghost" onClick={onClose}>Close</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -129,11 +142,16 @@ const DailyQuoteModal: React.FC<DailyQuoteModalProps> = ({ onClose }) => {
         
         <div className="relative w-full aspect-[6/5] overflow-hidden">
           {imageUrl && (
-            <img 
-              src={imageUrl} 
-              alt="Inspirational mood"
-              className="w-full h-full object-cover"
-            />
+            <>
+              <div className={`absolute inset-0 bg-gray-300 animate-pulse ${imageLoaded ? 'hidden' : 'block'}`}></div>
+              <img 
+                src={imageUrl} 
+                alt="Inspirational mood"
+                className="w-full h-full object-cover"
+                onLoad={() => setImageLoaded(true)}
+                style={{ opacity: imageLoaded ? 1 : 0 }}
+              />
+            </>
           )}
           
           {/* Dark overlay for quote visibility */}

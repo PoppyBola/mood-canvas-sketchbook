@@ -43,8 +43,24 @@ const Canvas: React.FC<CanvasProps> = ({ moodEntry, imageUrl, onBack }) => {
     setIsImageLoaded(true);
   };
   
-  const handleShare = () => {
-    toast.success("Sharing functionality coming soon!");
+  const handleShare = async () => {
+    try {
+      const shareText = `"${moodEntry.quote}" — ${moodEntry.quote_author}`;
+      
+      if (navigator.share) {
+        await navigator.share({
+          title: 'My Mood Canvas',
+          text: shareText
+        });
+        toast.success("Shared successfully!");
+      } else {
+        await navigator.clipboard.writeText(shareText);
+        toast.success("Quote copied to clipboard!");
+      }
+    } catch (err) {
+      toast.error("Couldn't share this canvas");
+      console.error("Share error:", err);
+    }
   };
 
   // Get the first mood tag to display above the canvas
@@ -91,12 +107,12 @@ const Canvas: React.FC<CanvasProps> = ({ moodEntry, imageUrl, onBack }) => {
             <div 
               className={cn(
                 "absolute inset-0 flex flex-col items-center justify-center p-6",
-                "bg-gradient-to-t from-black/70 via-black/40 to-black/30",
+                "bg-gradient-to-t from-black/70 via-black/40 to-black/20",
                 "backdrop-blur-[1px] transition-opacity duration-1000",
                 isImageLoaded ? "opacity-100" : "opacity-0"
               )}
             >
-              <div className="max-w-[90%] mx-auto text-center space-y-4">
+              <div className="max-w-[90%] w-full mx-auto text-center space-y-4">
                 <blockquote 
                   className={cn(
                     "font-display text-2xl md:text-3xl text-white leading-relaxed",
