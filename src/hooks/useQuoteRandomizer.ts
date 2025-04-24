@@ -29,7 +29,7 @@ export const useQuoteRandomizer = (initialMoodEntry: MoodEntry | null) => {
       const words = searchText.toLowerCase()
         .split(' ')
         .filter(word => word.length > 3) // Only consider meaningful words
-        .map(word => `%${word}%`);
+        .slice(0, 3); // Limit to 3 words to avoid complex queries
         
       if (words.length === 0) {
         setRelatedQuotes([]);
@@ -37,15 +37,11 @@ export const useQuoteRandomizer = (initialMoodEntry: MoodEntry | null) => {
         return;
       }
       
-      // Query for quotes containing any of the extracted words
-      let query = supabase.from('mood_entries').select('*');
-      
-      // Build a complex query to match any word
-      for (const word of words) {
-        query = query.or(`quote.ilike.${word}`);
-      }
-      
-      const { data, error } = await query;
+      // Use a more reliable query approach - search for any quote containing any of the words
+      const { data, error } = await supabase
+        .from('mood_entries')
+        .select('*')
+        .textSearch('quote', words.join(' | ')); // Use text search with OR operator
       
       if (error) throw error;
       
@@ -57,11 +53,27 @@ export const useQuoteRandomizer = (initialMoodEntry: MoodEntry | null) => {
           
         setRelatedQuotes(filteredQuotes);
       } else {
-        setRelatedQuotes([]);
+        // Fallback - get random quotes
+        const { data: randomQuotes, error: randomError } = await supabase
+          .from('mood_entries')
+          .select('*')
+          .limit(5);
+          
+        if (randomError) throw randomError;
+        
+        if (randomQuotes) {
+          const filteredRandomQuotes = currentMoodEntry
+            ? randomQuotes.filter(quote => quote.id !== currentMoodEntry.id)
+            : randomQuotes;
+            
+          setRelatedQuotes(filteredRandomQuotes);
+        } else {
+          setRelatedQuotes([]);
+        }
       }
     } catch (err) {
       console.error('Error finding related quotes:', err);
-      toast.error('Could not find related quotes');
+      // Silently handle error to prevent endless toast notifications
       setRelatedQuotes([]);
     } finally {
       setIsLoading(false);
@@ -79,13 +91,8 @@ export const useQuoteRandomizer = (initialMoodEntry: MoodEntry | null) => {
   };
   
   // Randomize the current quote based on related quotes
-  const randomizeQuote = async () => {
+  const randomizeQuote = () => {
     if (!currentMoodEntry) return null;
-    
-    // If we haven't searched for related quotes yet, do it now
-    if (relatedQuotes.length === 0) {
-      await findRelatedQuotes(currentMoodEntry.quote);
-    }
     
     // If we have related quotes, select a random one
     if (relatedQuotes.length > 0) {

@@ -27,14 +27,16 @@ const MobileActionBar: React.FC<MobileActionBarProps> = ({
   const handleInspirationClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (onInspiration) onInspiration();
+    onInspiration();
   };
   
   const handleCreateCanvasClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (onCreateCanvas) onCreateCanvas();
+    onCreateCanvas();
   };
+
+  if (!showButtons) return null;
 
   return (
     <motion.div 
@@ -49,45 +51,41 @@ const MobileActionBar: React.FC<MobileActionBarProps> = ({
       transition={{ type: "spring", stiffness: 260, damping: 20 }}
     >
       <div className="container mx-auto flex justify-around items-center gap-3 max-w-md">
-        {showButtons && (
-          <>
-            <motion.div 
-              className="flex-1"
-              whileTap={{ scale: 0.97 }}
-            >
-              <Button
-                onClick={handleCreateCanvasClick}
-                className="w-full py-6 rounded-2xl bg-gradient-to-br from-canvas-accent to-canvas-accent/90 hover:from-canvas-accent/90 hover:to-canvas-accent/80 text-white shadow-warm transition-all duration-300"
-              >
-                <span className="flex items-center">
-                  <PenLine className="mr-2 h-5 w-5" />
-                  New Canvas
-                </span>
-              </Button>
-            </motion.div>
-            
-            <motion.div 
-              className="flex-1"
-              whileTap={{ scale: 0.97 }}
-            >
-              <Button
-                onClick={handleInspirationClick}
-                variant="outline" 
-                className={cn(
-                  "w-full py-6 rounded-2xl border-2 transition-all duration-300",
-                  isDarkMode 
-                    ? "border-gray-700 bg-gray-800 hover:bg-gray-700 text-white" 
-                    : "border-canvas-border bg-white hover:bg-canvas-border/10"
-                )}
-              >
-                <span className="flex items-center">
-                  <Palette className="mr-2 h-5 w-5" />
-                  Inspiration
-                </span>
-              </Button>
-            </motion.div>
-          </>
-        )}
+        <motion.div 
+          className="flex-1"
+          whileTap={{ scale: 0.97 }}
+        >
+          <Button
+            onClick={handleCreateCanvasClick}
+            className="w-full py-6 rounded-2xl bg-gradient-to-br from-canvas-accent to-canvas-accent/90 hover:from-canvas-accent/90 hover:to-canvas-accent/80 text-white shadow-warm transition-all duration-300"
+          >
+            <span className="flex items-center">
+              <PenLine className="mr-2 h-5 w-5" />
+              New Canvas
+            </span>
+          </Button>
+        </motion.div>
+        
+        <motion.div 
+          className="flex-1"
+          whileTap={{ scale: 0.97 }}
+        >
+          <Button
+            onClick={handleInspirationClick}
+            variant="outline" 
+            className={cn(
+              "w-full py-6 rounded-2xl border-2 transition-all duration-300",
+              isDarkMode 
+                ? "border-gray-700 bg-gray-800 hover:bg-gray-700 text-white" 
+                : "border-canvas-border bg-white hover:bg-canvas-border/10"
+            )}
+          >
+            <span className="flex items-center">
+              <Palette className="mr-2 h-5 w-5" />
+              Inspiration
+            </span>
+          </Button>
+        </motion.div>
       </div>
     </motion.div>
   );

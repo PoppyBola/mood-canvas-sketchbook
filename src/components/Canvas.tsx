@@ -53,7 +53,7 @@ const Canvas: React.FC<CanvasProps> = ({ moodEntry, imageUrl, onBack }) => {
     : 'your mood';
 
   return (
-    <div className="w-full max-w-md space-y-4 animate-fade-up">
+    <div className="w-full max-w-md mx-auto space-y-4 animate-fade-up">
       {/* "Canvas for [mood]" positioned ABOVE image container */}
       <div className="text-center mb-3">
         <h2 className="text-xl font-medium text-canvas-foreground dark:text-white">
@@ -96,7 +96,7 @@ const Canvas: React.FC<CanvasProps> = ({ moodEntry, imageUrl, onBack }) => {
                 isImageLoaded ? "opacity-100" : "opacity-0"
               )}
             >
-              <div className="max-w-[90%] text-center space-y-4">
+              <div className="max-w-[90%] mx-auto text-center space-y-4">
                 <blockquote 
                   className={cn(
                     "font-display text-2xl md:text-3xl text-white leading-relaxed",

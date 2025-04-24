@@ -28,9 +28,19 @@ const EnhancedCanvas: React.FC<EnhancedCanvasProps> = ({
   // Initial search for related quotes when component mounts
   useEffect(() => {
     if (initialMoodEntry?.quote) {
-      findRelatedQuotes(initialMoodEntry.quote);
+      // Only trigger once when component mounts
+      const loadRelatedQuotes = async () => {
+        try {
+          await findRelatedQuotes(initialMoodEntry.quote);
+        } catch (err) {
+          // Silent fail to prevent endless notifications
+          console.error("Error finding related quotes:", err);
+        }
+      };
+      
+      loadRelatedQuotes();
     }
-  }, [initialMoodEntry, findRelatedQuotes]);
+  }, [initialMoodEntry]); // Intentionally remove findRelatedQuotes to prevent dependency cycle
   
   // Fetch public URL for the image if it's a Supabase storage path
   useEffect(() => {
