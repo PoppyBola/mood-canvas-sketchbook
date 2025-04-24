@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import Canvas from '../Canvas';
 import { useQuoteRandomizer } from '@/hooks/useQuoteRandomizer';
 import { MoodEntry } from '@/hooks/useMoodEntries';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface EnhancedCanvasProps {
   moodEntry: MoodEntry;
@@ -28,7 +30,43 @@ const EnhancedCanvas: React.FC<EnhancedCanvasProps> = ({
     if (initialMoodEntry?.quote) {
       findRelatedQuotes(initialMoodEntry.quote);
     }
-  }, [initialMoodEntry]);
+  }, [initialMoodEntry, findRelatedQuotes]);
+  
+  // Fetch public URL for the image if it's a Supabase storage path
+  useEffect(() => {
+    const getPublicImageUrl = async () => {
+      if (currentMoodEntry?.image_path) {
+        try {
+          // Skip if it's already a full URL
+          if (currentMoodEntry.image_path.startsWith('http')) {
+            setImageUrl(currentMoodEntry.image_path);
+            return;
+          }
+          
+          // Process storage path for Supabase
+          let storagePath = currentMoodEntry.image_path;
+          
+          // Remove bucket prefix if present
+          if (storagePath.startsWith('mood-images/')) {
+            storagePath = storagePath.replace(/^mood-images\//, '');
+          }
+          
+          const { data } = supabase.storage
+            .from('mood-images')
+            .getPublicUrl(storagePath);
+            
+          if (data?.publicUrl) {
+            setImageUrl(data.publicUrl);
+          }
+        } catch (err) {
+          console.error("Error getting public image URL:", err);
+          toast.error("Could not load image from storage");
+        }
+      }
+    };
+    
+    getPublicImageUrl();
+  }, [currentMoodEntry]);
   
   // Auto-rotate through related quotes every 30 seconds
   useEffect(() => {
@@ -39,7 +77,7 @@ const EnhancedCanvas: React.FC<EnhancedCanvasProps> = ({
       
       return () => clearInterval(quoteInterval);
     }
-  }, [isLoading]);
+  }, [isLoading, randomizeQuote]);
   
   if (!currentMoodEntry) return null;
   

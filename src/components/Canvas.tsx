@@ -47,11 +47,17 @@ const Canvas: React.FC<CanvasProps> = ({ moodEntry, imageUrl, onBack }) => {
     toast.success("Sharing functionality coming soon!");
   };
 
+  // Get the first mood tag to display above the canvas
+  const moodLabel = moodEntry.mood_tags && moodEntry.mood_tags.length > 0 
+    ? moodEntry.mood_tags[0] 
+    : 'your mood';
+
   return (
     <div className="w-full max-w-md space-y-4 animate-fade-up">
-      <div className="text-center mb-4">
+      {/* "Canvas for [mood]" positioned ABOVE image container */}
+      <div className="text-center mb-3">
         <h2 className="text-xl font-medium text-canvas-foreground dark:text-white">
-          Your Mood Canvas
+          Canvas for <span className="capitalize">{moodLabel}</span>
         </h2>
       </div>
       
